@@ -80,66 +80,6 @@ theorem prod_lt_one : (l : List ℝ) → (hl : l.length > 0) → (h1 : ∀ i : F
   }
 }
 
--- sublist from index i inclusive to j exclusive
-
---  | 0,   _     => []
---   | _+1, []    => []
---   | n+1, a::as => a :: take n as
--- | 0,   a     => a
---   | _+1, []    => []
---   | n+1, _::as => drop n as
-def List.slice (l : List ℝ) (i j : ℕ) : List ℝ := (l.drop i).take (j - i)
-
-#check List.take
-example : (l : List ℝ) → ∀ i : Fin l.length, l.slice i i = []
-| [] => fun ⟨i, is⟩ => by simp at is
-| a :: l => fun _ => by simp [List.slice]
-
-example (l : List ℝ) (i : ℕ) : l.slice 0 i ++ l.slice i l.length = l := by
-  simp [List.slice]
-  have : (l.drop i).length = l.length - i := List.length_drop i l
-  rw [← this]
-  rw [List.take_length (List.drop i l)]
-  exact List.take_append_drop i l
-  --  | 0,   _     => []
---   | _+1, []    => []
---   | n+1, a::as => a :: take n as
--- example (b c : ℕ) (l : List ℝ) (hbc : b ≤ c) : l.slice 0 b ++ l.slice b c = l.slice 0 c := by
-
-example (b c : ℕ) (l : List ℝ) (hbc : b ≤ c) : l.slice 0 b = (l.take (c + 1)).slice 0 b := by
-{
-  simp [List.slice]
-  have : b < c + 1 := by linarith
-  refine (List.ext ?_).symm
-  intro n
-  by_cases h : n < b
-  {
-    have : n < c + 1 := by linarith
-    rw [List.get?_take h, List.get?_take h, List.get?_take this]
-  }
-  {
-    simp at h
-
-    have : (List.take b (List.take (c + 1) l)).length ≤ b := List.length_take_le b (List.take (c + 1) l)
-    have : (l.take b).get? n = none := List.get?_len_le (by linarith [List.length_take_le b l])
-    rw [this]
-    by_cases h1 : n < c
-    {
-      have : (List.take b (List.take (c + 1) l)).length ≤ n := by linarith
-      exact List.get?_len_le this
-    }
-    {
-      simp at h1
-      exact List.get?_len_le (by linarith)
-    }
-  }
-}
-
-example (c a b : ℕ) (l : List ℝ) (hca : c ≤ a)  : l.slice a b = (l.drop c).slice (a - c) (b - c) := by
-{
-  simp [List.slice]
-  rw [tsub_tsub_tsub_cancel_right hca, Nat.sub_add_cancel hca]
-}
 
 theorem take_drop_sing (l : List ℝ) : ∀ (i: Fin l.length), l = (l.take i) ++ [(l.get i)] ++ (l.drop (i + 1)) := by
   intro i
