@@ -147,3 +147,9 @@ theorem F_right_eq (α β : ℝ) (ha : α > 0) (hb : β > 0)  (hba : β < 2*α) 
   apply Set.ext
   intro ⟨x, y⟩
   simp only [Set.prod, Set.mem_setOf_eq]
+
+example (α β x y : ℝ) (ha : α > 0) (hb : β > 0) (h : α*x^2 + β*y^2 = (x^2 + y^2)^2) : 2*y^2*x+2*x^3 - α*x = 0 ↔ (x, y) ∈ ({(0, 0), (0, β.sqrt), (0, -β.sqrt)} : Set (ℝ × ℝ)) ∪ {p : ℝ × ℝ | (α - β)*p.snd^2 = α^2 / 4 ∧ (α - β)*p.fst^2 = α*(α - 2*β)/4} := by
+  have := F_zero_iff β α y x hb ha (by linear_combination h)
+  simp at this
+  simp
+  tauto
