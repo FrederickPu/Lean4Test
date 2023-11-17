@@ -1,7 +1,172 @@
-import Lean4Test.AGM
+--import Lean4Test.AGM
 
 import Mathlib.Data.List.Basic
 import Mathlib.Data.Real.Basic
+
+import Mathlib.Analysis.Calculus.Deriv.Basic
+
+import Mathlib.Tactic.Polyrith
+
+example (α β x y y' : ℝ) (h : 2*(x^2+y^2)*(2*x + 2*y*y') = (α*2*x + β*2*y*y')) :
+  (2*x^2*y+2*y^3 - β*y)*y' = -(2*x^3+2*x*y^2 - α*x) := by
+  linear_combination h/2
+
+theorem kevin {a b c : ℝ} : a ≥ 0 → c > 0 → b*a = c → b > 0 := by
+  intros ha hc h
+  apply by_contradiction
+  intro hb
+  simp at hb
+  have han : a ≠ 0 := by {
+    intro q
+    simp [q] at h
+    linarith
+  }
+  have hbn : b ≠ 0 := by {
+    intro q
+    simp [q] at h
+    linarith
+  }
+  have : a > 0 := by exact Ne.lt_of_le (id (Ne.symm han)) ha
+  have : a*b < 0 := by exact Linarith.mul_neg (Ne.lt_of_le hbn hb) this
+  linarith
+theorem kevin1 {a b c : ℝ} : a > 0 → c ≥ 0 → b*a = c → b ≥ 0 := by
+  intros ha hc h
+  have : a ≠ 0 := by linarith
+  apply by_contradiction
+  intro hb
+  simp at hb
+  have : b*a < 0 := by exact mul_neg_of_neg_of_pos hb ha
+  linarith
+
+example (α β x y : ℝ) (hba : β < 2*α) (ha : α > 0) (hb : β > 0) (h : α*x^2 + β*y^2 = (x^2 + y^2)^2) : 2*x^2*y+2*y^3 - β*y = 0 ↔ (x, y) ∈ ({(0, 0), (α.sqrt, 0), (-α.sqrt, 0)} : Set (ℝ × ℝ)) := by
+  apply Iff.intro
+  intro h'
+  have : y*(2*x^2 + 2*y^2 - β) = 0 := by linear_combination h'
+  simp at this
+  cases this with
+  | inl l => {
+    rw [l] at h
+    ring_nf at h
+    have : x^2*(x^2 - α) = 0 :=
+      by linear_combination -h
+    have w : (x - α.sqrt)*(x + α.sqrt) = x^2 -α := by
+    {
+      ring
+      rw [Real.sq_sqrt (le_of_lt ha)]
+    }
+    rw [← w] at this
+    simp at this
+    simp
+
+    rcases this with h1 | h2 | h3
+    exact Or.inl ⟨h1, l⟩
+    exact Or.inr <| Or.inl ⟨by linarith, by linarith⟩
+    exact Or.inr <| Or.inr ⟨by linarith, by linarith⟩
+  }
+  | inr r => {
+    apply False.elim
+
+    have crux1 : x^2 + y^2 = β / 2 := by linear_combination r / 2
+    rw [crux1] at h
+    have e : (β - α)*x^2 = β^2 / 4 := by linear_combination β*crux1 - h
+    have : β - α > 0 := kevin (sq_nonneg x) (by linarith [sq_pos_of_pos hb]) e
+
+    have crux2 : (β - α)*y^2 = β*(β - 2*α)/4 := by linear_combination h - α*crux1
+    rw [mul_comm β, mul_div_assoc (β - 2 * α) β 4] at crux2
+    have := sq_nonneg y
+    have : (β - α)*y^2 ≥ 0 := by exact (zero_le_mul_left (by linarith)).mpr this
+    have : β - 2*α ≥ 0 := by exact kevin1 (by linarith) this (id crux2.symm)
+    linarith
+  }
+
+  {
+    intro hw
+    simp at hw
+    rcases hw with h1 | h2 | h3
+    simp [h1]
+    simp [h2]
+    simp [h3]
+  }
+
+
+#check inv_mul_cancel
+theorem Real.mul_left_cancel {a b c: ℝ} : c ≠ 0 →  c*a = c*b → a= b := by
+  intros hc h
+  have : c⁻¹ * (c*a) = c⁻¹*(c*b) := by exact congrArg (HMul.hMul c⁻¹) h
+  simp only [← mul_assoc, inv_mul_cancel hc, one_mul] at this
+  exact this
+
+example (α β x y : ℝ) (ha : α > 0) (hb : β > 0) (h : α*x^2 + β*y^2 = (x^2 + y^2)^2) : 2*x^2*y+2*y^3 - β*y = 0 ↔ (x, y) ∈ ({(0, 0), (α.sqrt, 0), (-α.sqrt, 0)} : Set (ℝ × ℝ)) ∪ {p : ℝ × ℝ | (β - α)*p.fst^2 = β^2 / 4 ∧ (β - α)*p.snd^2 = β*(β - 2*α)/4} := by
+  apply Iff.intro
+  intro h'
+  have : y*(2*x^2 + 2*y^2 - β) = 0 := by linear_combination h'
+  simp at this
+  cases this with
+  | inl l => {
+    rw [l] at h
+    ring_nf at h
+    have : x^2*(x^2 - α) = 0 :=
+      by linear_combination -h
+    have w : (x - α.sqrt)*(x + α.sqrt) = x^2 -α := by
+    {
+      ring
+      rw [Real.sq_sqrt (le_of_lt ha)]
+    }
+    rw [← w] at this
+    simp at this
+    simp
+
+    apply Or.inl
+    rcases this with h1 | h2 | h3
+    exact Or.inl ⟨h1, l⟩
+    exact Or.inr <| Or.inl ⟨by linarith, by linarith⟩
+    exact Or.inr <| Or.inr ⟨by linarith, by linarith⟩
+  }
+  | inr r => {
+    simp
+    apply Or.inr
+    have crux : x^2 + y^2 = β / 2 := by linear_combination r / 2
+    rw [crux] at h
+    have e : (β - α)*x^2 = β^2 / 4 := by linear_combination β*crux - h
+    exact ⟨by linear_combination β*crux - h, by linear_combination h - α*crux⟩
+  }
+  {
+    simp
+    intro w
+    rcases w with (h1 | h2 | h3) | h4
+    simp [h1]
+    simp [h2]
+    simp [h3]
+    {
+      have : (β - α) * (x^2 + y^2) = (β  - α) * (β / 2) := by linear_combination h4.left + h4.right
+      have crux : β - α ≠ 0 := by {
+        intro q
+        have := h4.left
+        simp [q] at this
+        linarith [sq_pos_of_pos hb]
+      }
+      have : (x^2 + y^2) = β / 2 := Real.mul_left_cancel crux this
+      linear_combination y*2*this
+    }
+  }
+
+example (α β : ℝ) (ha : α > 0) (hb : β > 0)  (hba : β < 2*α) : {p : ℝ × ℝ | (β - α)*p.fst^2 = β^2 / 4 ∧ (β - α)*p.snd^2 = β*(β - 2*α)/4} = ∅ := by
+{
+  apply Set.ext
+  simp only [Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false, Prod.forall]
+  intros x y h
+  have crux1 : β - α > 0 := kevin (sq_nonneg x) (by linarith [sq_pos_of_pos hb]) h.left
+  have : (β - α)*y^2 ≥ 0 := by exact (zero_le_mul_left (by linarith)).mpr (sq_nonneg y)
+  rw [mul_comm β, mul_div_assoc (β - 2 * α) β 4] at h
+  -- have : (β - α)*x^2 = β*(β - 2*α)/4 :=
+  have : β - 2*α ≥ 0 := kevin1 (by linarith) this h.right.symm
+  linarith
+}
+
+#check deriv
+
+example : deriv (fun (x:ℝ) => x^2) 1 = 2*1 :=
+by simp
 
 #check ℝ
 
