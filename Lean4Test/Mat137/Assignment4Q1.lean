@@ -1,6 +1,48 @@
 import Mathlib.Tactic
 import Mathlib.Data.Real.Basic
 
+def all_sign_2 (a b : ℝ) : Set (ℝ × ℝ) := {(a,-b), (a, b), (-a, b),(-a, -b)}
+theorem all_sign_sq (a b : ℝ) : all_sign_2 a b = {p : ℝ × ℝ | p.fst^2 = a^2 ∧ p.snd^2 = b^2} := by
+  apply Set.ext
+  intros p
+  apply Iff.intro
+
+  exact fun h => by
+    simp only [all_sign_2, Set.mem_insert_iff, Set.mem_singleton_iff] at h
+    rcases h with h1 | h2 | h3 | h4
+    simp [h1]
+    simp [h2]
+    simp [h3]
+    simp [h4]
+
+  exact fun h => by
+    simp [all_sign_2]
+    have h1 : (p.fst - a)*(p.fst + a) = 0 := by linear_combination h.left
+    simp at h1
+    have h2 : (p.snd - b)*(p.snd + b) = 0 := by linear_combination h.right
+    simp at h2
+
+    have w : p = (p.1, p.2)  := by rfl
+    rcases h1, h2 with ⟨ha | ha, hb | hb⟩;
+    repeat' (
+      rw [w]
+      simp only [Prod.mk.inj_iff]
+      repeat (
+        first | apply Or.inl; exact ⟨by linarith, by linarith⟩ | apply Or.inr | exact ⟨by linarith, by linarith⟩
+      )
+    )
+
+
+  -- match h1, h2 with
+  -- | Or.inl h1', Or.inl h2' => {
+  --   rw [w]
+  --   have ha := congrFun (congrArg HAdd.hAdd h1') a
+  --   ring_nf at ha
+  --   have hb := congrFun (congrArg HAdd.hAdd h2') b
+  --   ring_nf at hb
+  --   simp [ha, hb]
+  -- }
+
 theorem kevin {a b c : ℝ} : a ≥ 0 → c > 0 → b*a = c → b > 0 := by
   intros ha hc h
   apply by_contradiction
@@ -93,6 +135,69 @@ theorem F_right_case_nil (α β : ℝ) (ha : α > 0) (hb : β > 0)  (hba : β < 
   have : β - 2*α ≥ 0 := kevin1 (by linarith) this h.right.symm
   linarith
 
+example (α β x y : ℝ) (ha : α > 0) (hb : β > 0)  (hba : β < 2*α) (h : α*x^2 + β*y^2 = (x^2 + y^2)^2)  : 2*x^2*y+2*y^3 - β*y = 0 ↔ (x, y) ∈ ({(0, 0), (α.sqrt, 0), (-α.sqrt, 0)} : Set (ℝ × ℝ)) := by
+  rw [F_zero_iff α β x y ha hb h]
+  rw [Set.mem_union, F_right_case_nil α β ha hb hba]
+  simp only [Set.mem_empty_iff_false, or_false]
+
+example (α β x y : ℝ) (ha : α > 0) (hb : β > 0)  (hba : 2*α < β) (h : α*x^2 + β*y^2 = (x^2 + y^2)^2)  : 2*x^2*y+2*y^3 - β*y = 0 ↔ (x, y) ∈ ({(0, 0), (α.sqrt, 0), (-α.sqrt, 0)} : Set (ℝ × ℝ)) ∪ all_sign_2 (β/ (2*(β - α).sqrt)) ((β*(β - 2*α)).sqrt/(2*(β - α).sqrt)) := by
+  have hb2a : β * (β - 2*α) ≥ 0 := by
+  {
+    have : (β - 2*α) ≥ 0 := by linarith
+    exact (zero_le_mul_left hb).mpr this
+  }
+  have hba1 : β - α ≥ 0 := by linarith
+  have hba2 : β - α ≠ 0 := by linarith
+
+  rw [F_zero_iff α β x y ha hb h]
+  simp only [Set.mem_union]
+  apply or_congr_right
+  apply Iff.intro
+  intro hw
+  rw [all_sign_sq]
+  simp
+
+  simp at hw
+
+  -- get rid of square roots in denominator
+  ring_nf
+  simp [Real.sq_sqrt hba1]; rw [Real.sq_sqrt]
+
+  apply And.intro
+  linear_combination (norm := ring_nf) hw.left / (β - α)
+  {
+    have : β - α ≠ 0 := by linarith
+    field_simp
+    ring
+  }
+  linear_combination (norm := ring_nf) hw.right / (β - α)
+  {
+    have : β - α ≠ 0 := by linarith
+    field_simp
+    ring
+  }
+  linarith only [hb2a]
+
+  rw [all_sign_sq]
+  simp
+  intros h1 h2
+
+  -- get rid of square roots in denominator
+  ring_nf at h2
+  simp [Real.sq_sqrt hba1] at h2; rw [Real.sq_sqrt] at h2
+
+  apply And.intro
+  linear_combination (norm := ring_nf) (β - α)*h1
+  {
+    field_simp
+    ring
+  }
+  linear_combination (norm := ring_nf) (β - α)*h2
+  {
+    field_simp
+    ring
+  }
+  linarith only [hb2a]
 #check Set.prod
 theorem F_right_inter_left_zero_if (α β : ℝ) (ha : α > 0) (hb : β > 0)  (hba : 2*α < β) : {p : ℝ × ℝ | (β - α)*p.fst^2 = β^2 / 4 ∧ (β - α)*p.snd^2 = β*(β - 2*α)/4} ∩ {(0, 0), (α.sqrt, 0), (-α.sqrt, 0)} = ∅ := by
   apply Set.ext
