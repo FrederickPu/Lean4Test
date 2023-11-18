@@ -32,17 +32,6 @@ theorem all_sign_sq (a b : ℝ) : all_sign_2 a b = {p : ℝ × ℝ | p.fst^2 = a
       )
     )
 
-
-  -- match h1, h2 with
-  -- | Or.inl h1', Or.inl h2' => {
-  --   rw [w]
-  --   have ha := congrFun (congrArg HAdd.hAdd h1') a
-  --   ring_nf at ha
-  --   have hb := congrFun (congrArg HAdd.hAdd h2') b
-  --   ring_nf at hb
-  --   simp [ha, hb]
-  -- }
-
 theorem kevin {a b c : ℝ} : a ≥ 0 → c > 0 → b*a = c → b > 0 := by
   intros ha hc h
   apply by_contradiction
@@ -70,6 +59,12 @@ theorem kevin1 {a b c : ℝ} : a > 0 → c ≥ 0 → b*a = c → b ≥ 0 := by
   simp at hb
   have : b*a < 0 := by exact mul_neg_of_neg_of_pos hb ha
   linarith
+
+theorem Real.mul_left_cancel {a b c: ℝ} : c ≠ 0 →  c*a = c*b → a= b := by
+  intros hc h
+  have : c⁻¹ * (c*a) = c⁻¹*(c*b) := by exact congrArg (HMul.hMul c⁻¹) h
+  simp only [← mul_assoc, inv_mul_cancel hc, one_mul] at this
+  exact this
 
 theorem F_zero_iff (α β x y : ℝ) (ha : α > 0) (hb : β > 0) (h : α*x^2 + β*y^2 = (x^2 + y^2)^2) : 2*x^2*y+2*y^3 - β*y = 0 ↔ (x, y) ∈ ({(0, 0), (α.sqrt, 0), (-α.sqrt, 0)} : Set (ℝ × ℝ)) ∪ {p : ℝ × ℝ | (β - α)*p.fst^2 = β^2 / 4 ∧ (β - α)*p.snd^2 = β*(β - 2*α)/4} := by
   apply Iff.intro
@@ -134,11 +129,6 @@ theorem F_right_case_nil (α β : ℝ) (ha : α > 0) (hb : β > 0)  (hba : β < 
   rw [mul_comm β, mul_div_assoc (β - 2 * α) β 4] at h
   have : β - 2*α ≥ 0 := kevin1 (by linarith) this h.right.symm
   linarith
-
-example (α β x y : ℝ) (ha : α > 0) (hb : β > 0)  (hba : β < 2*α) (h : α*x^2 + β*y^2 = (x^2 + y^2)^2)  : 2*x^2*y+2*y^3 - β*y = 0 ↔ (x, y) ∈ ({(0, 0), (α.sqrt, 0), (-α.sqrt, 0)} : Set (ℝ × ℝ)) := by
-  rw [F_zero_iff α β x y ha hb h]
-  rw [Set.mem_union, F_right_case_nil α β ha hb hba]
-  simp only [Set.mem_empty_iff_false, or_false]
 
 example (α β x y : ℝ) (ha : α > 0) (hb : β > 0)  (hba : 2*α < β) (h : α*x^2 + β*y^2 = (x^2 + y^2)^2)  : 2*x^2*y+2*y^3 - β*y = 0 ↔ (x, y) ∈ ({(0, 0), (α.sqrt, 0), (-α.sqrt, 0)} : Set (ℝ × ℝ)) ∪ all_sign_2 (β/ (2*(β - α).sqrt)) ((β*(β - 2*α)).sqrt/(2*(β - α).sqrt)) := by
   have hb2a : β * (β - 2*α) ≥ 0 := by
@@ -253,6 +243,18 @@ theorem F_right_eq (α β : ℝ) (ha : α > 0) (hb : β > 0)  (hba : β < 2*α) 
   intro ⟨x, y⟩
   simp only [Set.prod, Set.mem_setOf_eq]
 
+example (α β x y : ℝ) (ha : α > 0) (hb : β > 0)  (hba : β ≤ 2*α) (h : α*x^2 + β*y^2 = (x^2 + y^2)^2)  : 2*x^2*y+2*y^3 - β*y = 0 ↔ (x, y) ∈ ({(0, 0), (α.sqrt, 0), (-α.sqrt, 0)} : Set (ℝ × ℝ)) := by
+  rw [F_zero_iff α β x y ha hb h, Set.mem_union]
+  cases lt_or_eq_of_le hba with
+  | inl hba =>
+  rw [F_right_case_nil α β ha hb hba]
+  simp only [Set.mem_empty_iff_false, or_false]
+  | inr hba =>
+  have := F_right_eq_subset_left_if α β ha hb hba
+  rw [F_right_eq_subset_left_if α β ha hb hba]
+  simp
+
+-- G stuff
 example (α β x y : ℝ) (ha : α > 0) (hb : β > 0) (h : α*x^2 + β*y^2 = (x^2 + y^2)^2) : 2*y^2*x+2*x^3 - α*x = 0 ↔ (x, y) ∈ ({(0, 0), (0, β.sqrt), (0, -β.sqrt)} : Set (ℝ × ℝ)) ∪ {p : ℝ × ℝ | (α - β)*p.snd^2 = α^2 / 4 ∧ (α - β)*p.fst^2 = α*(α - 2*β)/4} := by
   have := F_zero_iff β α y x hb ha (by linear_combination h)
   simp at this
