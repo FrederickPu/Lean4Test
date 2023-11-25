@@ -7,6 +7,25 @@ import Mathlib.Analysis.Calculus.Deriv.Basic
 
 import Mathlib.Tactic.Polyrith
 
+example (P : Prop) : P ∨ ¬P := by exact em P
+#check List.range
+def f (x : ℕ) : ℕ := Id.run do
+  let mut out : ℕ := 0
+  for _ in List.range x do
+    out := out + 1
+  return out
+
+#check List.ForIn.eq
+theorem lem :  ∀ n : ℕ, f n = n := by
+ intro n
+ simp [f]
+ induction n with
+ | zero => rfl
+ | succ n hn => {
+  rw [List.range, List.range.loop]
+ }
+
+
 example (α β x y y' : ℝ) (h : 2*(x^2+y^2)*(2*x + 2*y*y') = (α*2*x + β*2*y*y')) :
   (2*x^2*y+2*y^3 - β*y)*y' = -(2*x^3+2*x*y^2 - α*x) := by
   linear_combination h/2
