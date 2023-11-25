@@ -1,5 +1,8 @@
 import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.Analysis.Convex.KreinMilman
+import Mathlib.Analysis.Asymptotics.Asymptotics
+
+#check Asymptotics.IsLittleO
 
 example (a b : ℝ) : a ≤ b →  a ≠ b → a < b := by exact fun a_1 a_2 => Ne.lt_of_le a_2 a_1
 #check ContinuousOn.image_Icc -- most useful for IVT (could also help for EVT)
@@ -102,14 +105,14 @@ theorem EVT_min (a b : ℝ) (hab : a < b) (f : ℝ → ℝ) (hf : ContinuousOn f
     exact H
   }
 #check Real.image_Icc
-def increasing_on (a b : ℝ) (f : ℝ → ℝ) := ∀ x₁ ∈ Set.Icc a b, ∀ x₂ ∈ Set.Icc a b, x₁ < x₂ → f x₁ < f x₂
+def increasing_on (S : Set ℝ) (f : ℝ → ℝ) := ∀ x₁ ∈ S, ∀ x₂ ∈ S, x₁ < x₂ → f x₁ < f x₂
 def decreasing_on (a b : ℝ) (f : ℝ → ℝ) := ∀ x₁ ∈ Set.Icc a b, ∀ x₂ ∈ Set.Icc a b, x₁ < x₂ → f x₁ > f x₂
 
 #check Set.InjOn
 example (a b c : ℝ) : c ≤ b → Set.Icc a c ⊆ Set.Icc a b := by exact fun a_1 =>
   Set.Icc_subset_Icc_right a_1
 theorem Inj_inc (a b : ℝ) (hab : a < b) (f : ℝ → ℝ) (Hab : f a < f b) (hf : ContinuousOn f (Set.Icc a b)) :
- Set.InjOn f (Set.Icc a b) → increasing_on a b f := by
+ Set.InjOn f (Set.Icc a b) → increasing_on (Set.Icc a b) f := by
 {
   intro H
   apply by_contradiction
@@ -166,15 +169,109 @@ theorem Inj_dec (a b : ℝ) (hab : a < b) (f : ℝ → ℝ) (Hab : f a > f b) (h
  simp [decreasing_on]
  exact this
 
-example (a b : ℝ) (hab : a < b) (f : ℝ → ℝ) (hf : ContinuousOn f (Set.Icc a b)) :
+theorem dec_or_inc_of_Inj (a b : ℝ) (hab : a < b) (f : ℝ → ℝ) (hf : ContinuousOn f (Set.Icc a b)) :
+ Set.InjOn f (Set.Icc a b) → increasing_on (Set.Icc a b) f ∨ decreasing_on a b f := by
+ intro H
+ cases eq_or_ne (f a) (f b) with
+ | inl l => {
+  have := H (Set.right_mem_Icc.mpr (le_of_lt hab)) (Set.left_mem_Icc.mpr (le_of_lt hab)) l
+  linarith
+ }
+ | inr r => {
+  cases Ne.lt_or_lt r with
+  | inl l => {
+    left
+    exact Inj_inc a b hab f l hf H
+  }
+  | inr r => {
+    right
+    exact Inj_dec a b hab f r hf H
+  }
+ }
+
+#check image_sub_le_mul_sub_of_deriv_le
+#check fderiv
+
+#check Asymptotics.isLittleO_iff
+#check deriv
+
+#check hasDerivAt_iff_tendsto_slope_zero
+#check Filter.Tendsto
+#check mem_nhds_iff
+#check UniformSpace.ball
+#check UniformSpace.mem_ball_self
+#check IsGLB
+
+#check nhds
+#check Filter
+
+example (α : Type) (L R : Filter α) : ∀ x, x ∈ L ⊓ R → x ∈ L := by {
+  intro x
+  intro hx
+  rw [Filter.mem_inf_iff] at hx
+}
+example (f : ℝ → ℝ) (hf : Differentiable ℝ f) : HasDerivAt f 1 0 → ∃ ε > 0, |2 / ε * (f (ε / 2) - f 0) - 2| < 2:= by
+{
+  intros hfd
+  rw [hasDerivAt_iff_tendsto_slope_zero] at hfd
+  have : {x : ℝ | |x - 2| < 2} ∈ nhds 1 := by {
+    rw [mem_nhds_iff]
+    use ({x : ℝ | |x - 2| < 2} )
+    simp only [Set.setOf_subset_setOf, imp_self, forall_const, Set.mem_setOf_eq, abs_one,
+      true_and]
+    apply And.intro
+    exact Metric.isOpen_ball -- very important
+    norm_num
+  }
+  specialize hfd this
+  simp [Filter.map, nhdsWithin] at hfd
+  rw [Filter.mem_inf_iff] at hfd
+  match hfd with
+  | ⟨t1, ht1, t2, ht2, h⟩ => {
+    rw [mem_nhds_iff] at ht1
+    match ht1 with
+    | ⟨t, ⟨ht, ht', ht''⟩⟩ => {
+      simp at ht2
+      rw [Metric.isOpen_iff] at ht'
+      specialize ht' 0 ht''
+      match ht' with
+      | ⟨ε, he, He⟩ => {
+        have crux : Metric.ball 0 ε ⊆ t1 := Set.Subset.trans He ht
+        have crux1 : ε / 2 ∈ Metric.ball 0 ε := by {
+          simp
+          have : |ε| = ε := by exact abs_of_pos he
+          rw [this]
+          linarith
+        }
+        have crux2 : ε/2 ∈ {(0:ℝ)}ᶜ := by {
+          have : ε/2 ∉ {(0:ℝ)} := by {
+            intro h
+            rw [Set.mem_singleton_iff] at h
+            linarith
+          }
+          exact Set.mem_compl this
+        }
+        have := ht2 crux2
+        have := ht <| He crux1
+        have : ε/2 ∈ t1 ∩ t2 := Set.mem_inter (ht (He crux1)) (ht2 crux2)
+        rw [← h] at this
+        simp at this
+        use ε
+      }
+    }
+  }
+}
+example (a b : ℝ) (hab : a < b) (f : ℝ → ℝ) (hf : ContinuousOn f (Set.Icc a b)) (hf' : Differentiable ℝ f) :
   deriv f a < 0 → deriv f b > 0 → ∃ c ∈ Set.Ioo a b, deriv f c = 0 := by
   cases eq_or_ne (f a) (f b) with
   | inl l => exact fun _ _ => exists_deriv_eq_zero hab hf l
   | inr r => {
     cases Ne.lt_or_lt r with
     | inl l => {
+      suffices : Set.InjOn f (Set.Icc a b)
       intros ha hb
-
+      have := Inj_inc a b hab f l hf this
+      have := Convex.strictMonoOn_of_deriv_pos
     }
   }
 #check exists_deriv_eq_zero-- rolles theorem
