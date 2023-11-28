@@ -273,52 +273,192 @@ theorem neg_deriv_dec (f : ℝ → ℝ) (f' a : ℝ) : f' < 0 → HasDerivAt f f
 }
 
 #check hasDerivAt_deriv_iff
+#check Continuous.neg
+#check ContinuousAt.neg
+#check Continuous.comp
+#check (Continuous.neg continuous_id')
+#check differentiable_id
+example (a : ℝ) (f : ℝ → ℝ) : Continuous (fun (x:ℝ) => x) := by exact continuous_id'
 
-
+theorem crux_invar (a : ℝ) {f : ℝ → ℝ} (hf' : Differentiable ℝ f) : deriv (fun x => f (-x)) a  = - deriv f (-a) := by
+{
+  have : deriv (f ∘ (fun x => (-x))) a = - deriv f (-a) := by
+    rw [deriv.comp, deriv.neg]
+    simp
+    exact hf' _
+    exact Differentiable.neg differentiable_id _
+  simp [Function.comp] at this
+  exact this
+}
 example (a b : ℝ) (hab : a < b) (f : ℝ → ℝ) (hf : ContinuousOn f (Set.Icc a b)) (hf' : Differentiable ℝ f) :
   deriv f a < 0 → deriv f b > 0 → ∃ c ∈ Set.Ioo a b, deriv f c = 0 := by
-  cases eq_or_ne (f a) (f b) with
-  | inl l => exact fun _ _ => exists_deriv_eq_zero hab hf l
-  | inr r => {
-    cases Ne.lt_or_lt r with
-    | inl l => {
-      suffices : Set.InjOn f (Set.Icc a b)
-      intros ha hb
-      have crux1 := Inj_inc a b hab f l hf this
-      have crux2 := neg_deriv_dec f (deriv f a) a ha (by {
+  wlog h' : f a ≠ f b
+  simp at h'
+  intros _ _
+  exact exists_deriv_eq_zero hab hf h'
+
+  wlog h : (f a < f b)
+  simp at h
+  have h : f b < f a := Ne.lt_of_le (id (Ne.symm h')) h
+  specialize this (-b) (-a) (by linarith) (fun x => f (-x)) (by {
+    have : ContinuousOn (f ∘ (fun x => -x)) (Set.Icc (-b) (-a)) := by
+    {
+      have w: ContinuousOn (fun x => -x) (Set.Icc (-b) (-a)) := ContinuousOn.neg continuousOn_id
+      have u : Set.MapsTo (fun x => -x) (Set.Icc (-b) (-a)) (Set.Icc a b) := by {
+        intro x
+        simp
+        exact fun hx1 hx2 => ⟨by linarith, by linarith⟩
+      }
+      exact ContinuousOn.comp hf w u
+    }
+    simp only [Function.comp] at this
+    exact this
+  })
+  specialize this (by {
+    have : Differentiable ℝ (f ∘ (fun x => -x)) :=
+      Differentiable.comp hf' <| Differentiable.neg differentiable_id
+    simp only [Function.comp] at this
+    exact this
+  })
+  simp at this
+  specialize this h'.symm h
+  rw [crux_invar (-b) hf', crux_invar (-a) hf'] at this
+  simp at this
+  intros hfa hfb
+  specialize this hfb hfa
+  match this with
+  | ⟨c, hc⟩ => {
+    use -c
+    apply And.intro
+    apply And.intro
+    linarith [hc.left.right]
+    linarith [hc.left.left]
+    rw [crux_invar c hf'] at hc
+    linarith
+  }
+
+  {
+    wlog w : Set.InjOn f (Set.Icc a b)
+    {
+      simp only [not_forall, Set.InjOn] at w
+      match w with
+      | ⟨x, hx, y, hy, Hf, H⟩ => {
+        cases Ne.lt_or_lt H with
+        | inl l => {
+          have crux : Set.Icc x y ⊆ Set.Icc a b := Set.Icc_subset (Set.Icc a b) hx hy
+          have : ContinuousOn f (Set.Icc x y) := ContinuousOn.mono hf crux
+          have := exists_deriv_eq_zero l this Hf
+          intros _ _
+          match this with
+          | ⟨c, hc, Hc⟩ => {
+            use c
+            simp
+            simp at hc
+            apply And.intro
+            apply And.intro
+            linarith [hc.left, hx.left]
+            linarith [hc.right, hy.right]
+            exact Hc
+          }
+        }
+        | inr r => {
+          have crux : Set.Icc y x ⊆ Set.Icc a b := Set.Icc_subset (Set.Icc a b) hy hx
+          have : ContinuousOn f (Set.Icc y x) := ContinuousOn.mono hf crux
+          have := exists_deriv_eq_zero r this Hf.symm
+          intros _ _
+          match this with
+          | ⟨c, hc, Hc⟩ => {
+            use c
+            simp
+            simp at hc
+            apply And.intro
+            apply And.intro
+            linarith [hc.left, hy.left]
+            linarith [hc.right, hx.right]
+            exact Hc
+          }
+        }
+      }
+    }
+    have crux1 := Inj_inc a b hab f h hf w
+    intros ha hb
+    have crux2 := neg_deriv_dec f (deriv f a) a ha (by {
         have : deriv f a ≠ 0 := by exact LT.lt.ne ha
         specialize hf' a
         exact hasDerivAt_deriv_iff.mpr hf'
       })
-      match crux2 with
-      | ⟨δ, hd, Hd⟩ => {
-        specialize Hd (min (δ / 2) (b - a)) (by {
-          apply And.intro
-          {
-            apply lt_min_iff.mpr
-            apply And.intro
-            linarith
-            linarith
-          }
-          apply min_lt_iff.mpr
-          left
-          linarith
-        })
-        have : a < min (a + δ / 2) b := by {
+    match crux2 with
+    | ⟨δ, hd, Hd⟩ => {
+      specialize Hd (min (δ / 2) (b - a)) (by {
+        apply And.intro
+        {
           apply lt_min_iff.mpr
           apply And.intro
           linarith
-          exact hab
+          linarith
         }
-        apply crux1 at this
-        simp only [add_sub_cancel'_right ,← min_add_add_left a (δ / 2) (b - a)] at Hd
+        apply min_lt_iff.mpr
+        left
         linarith
-        exact Set.left_mem_Icc.mpr (le_of_lt hab)
-        simp
-        exact ⟨by linarith, by linarith⟩
+      })
+      have : a < min (a + δ / 2) b := by {
+        apply lt_min_iff.mpr
+        apply And.intro
+        linarith
+        exact hab
       }
+      apply crux1 at this
+      simp only [add_sub_cancel'_right ,← min_add_add_left a (δ / 2) (b - a)] at Hd
+      linarith
+      exact Set.left_mem_Icc.mpr (le_of_lt hab)
+      simp
+      exact ⟨by linarith, by linarith⟩
     }
+
   }
+  -- cases eq_or_ne (f a) (f b) with
+  -- | inl l => exact fun _ _ => exists_deriv_eq_zero hab hf l
+  -- | inr r => {
+
+  --   cases Ne.lt_or_lt r with
+  --   | inl l => {
+  --     suffices : Set.InjOn f (Set.Icc a b)
+  --     intros ha hb
+  --     have crux1 := Inj_inc a b hab f l hf this
+  --     have crux2 := neg_deriv_dec f (deriv f a) a ha (by {
+  --       have : deriv f a ≠ 0 := by exact LT.lt.ne ha
+  --       specialize hf' a
+  --       exact hasDerivAt_deriv_iff.mpr hf'
+  --     })
+  --     match crux2 with
+  --     | ⟨δ, hd, Hd⟩ => {
+  --       specialize Hd (min (δ / 2) (b - a)) (by {
+  --         apply And.intro
+  --         {
+  --           apply lt_min_iff.mpr
+  --           apply And.intro
+  --           linarith
+  --           linarith
+  --         }
+  --         apply min_lt_iff.mpr
+  --         left
+  --         linarith
+  --       })
+  --       have : a < min (a + δ / 2) b := by {
+  --         apply lt_min_iff.mpr
+  --         apply And.intro
+  --         linarith
+  --         exact hab
+  --       }
+  --       apply crux1 at this
+  --       simp only [add_sub_cancel'_right ,← min_add_add_left a (δ / 2) (b - a)] at Hd
+  --       linarith
+  --       exact Set.left_mem_Icc.mpr (le_of_lt hab)
+  --       simp
+  --       exact ⟨by linarith, by linarith⟩
+  --     }
+  --   }
+  -- }
 #check exists_deriv_eq_zero-- rolles theorem
 #check exists_deriv_eq_slope
 #check intermediate_value_Icc
