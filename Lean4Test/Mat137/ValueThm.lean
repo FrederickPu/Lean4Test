@@ -1,6 +1,7 @@
 import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.Analysis.Convex.KreinMilman
 import Mathlib.Analysis.Asymptotics.Asymptotics
+-- import Lean4Test.Mat137.eternal_sadness
 
 #check Asymptotics.IsLittleO
 
@@ -210,57 +211,70 @@ example (α : Type) (L R : Filter α) : ∀ x, x ∈ L ⊓ R → x ∈ L := by {
   intro hx
   rw [Filter.mem_inf_iff] at hx
 }
-example (f : ℝ → ℝ) (hf : Differentiable ℝ f) : HasDerivAt f 1 0 → ∃ ε > 0, |2 / ε * (f (ε / 2) - f 0) - 2| < 2:= by
-{
-  intros hfd
-  rw [hasDerivAt_iff_tendsto_slope_zero] at hfd
-  have : {x : ℝ | |x - 2| < 2} ∈ nhds 1 := by {
-    rw [mem_nhds_iff]
-    use ({x : ℝ | |x - 2| < 2} )
-    simp only [Set.setOf_subset_setOf, imp_self, forall_const, Set.mem_setOf_eq, abs_one,
-      true_and]
+
+#check hasDeriv_of_hasFderiv
+theorem tendsto_imp (a L : ℝ) (f : ℝ → ℝ) : Filter.Tendsto f (nhdsWithin a {a}ᶜ) (nhds L) → (∀ ε > 0, ∃ δ > (0:ℝ), ∀ x : ℝ, 0 < |x - a| ∧ |x - a| < δ → |f x - L| < ε) := by
+  rw [Filter.tendsto_def]
+  simp only [mem_nhds_iff]
+  simp only [Filter.map, nhdsWithin, Filter.mem_inf_iff]
+  simp only [mem_nhds_iff]
+  intro h
+  intros ε he
+  specialize h {x | |x - L| < ε} (by {
+    use ({x | |x - L| < ε})
     apply And.intro
-    exact Metric.isOpen_ball -- very important
-    norm_num
-  }
-  specialize hfd this
-  simp [Filter.map, nhdsWithin] at hfd
-  rw [Filter.mem_inf_iff] at hfd
-  match hfd with
-  | ⟨t1, ht1, t2, ht2, h⟩ => {
-    rw [mem_nhds_iff] at ht1
-    match ht1 with
-    | ⟨t, ⟨ht, ht', ht''⟩⟩ => {
+    exact Eq.subset rfl
+    apply And.intro
+    exact Metric.isOpen_ball
+    simp; exact he
+  })
+  simp only [Metric.isOpen_iff] at h
+  match h with
+  | ⟨t1, ⟨t, ht, Ht⟩, t2, ht2, H⟩ =>
+  {
+    simp only [Set.preimage_setOf_eq] at H
+    match Ht.left a Ht.right with
+    | ⟨δ, hd, Hd⟩ => {
+      use δ; use hd
+      simp [Metric.ball, dist] at Hd
       simp at ht2
-      rw [Metric.isOpen_iff] at ht'
-      specialize ht' 0 ht''
-      match ht' with
-      | ⟨ε, he, He⟩ => {
-        have crux : Metric.ball 0 ε ⊆ t1 := Set.Subset.trans He ht
-        have crux1 : ε / 2 ∈ Metric.ball 0 ε := by {
-          simp
-          have : |ε| = ε := by exact abs_of_pos he
-          rw [this]
-          linarith
-        }
-        have crux2 : ε/2 ∈ {(0:ℝ)}ᶜ := by {
-          have : ε/2 ∉ {(0:ℝ)} := by {
-            intro h
-            rw [Set.mem_singleton_iff] at h
-            linarith
-          }
-          exact Set.mem_compl this
-        }
-        have := ht2 crux2
-        have := ht <| He crux1
-        have : ε/2 ∈ t1 ∩ t2 := Set.mem_inter (ht (He crux1)) (ht2 crux2)
-        rw [← h] at this
-        simp at this
-        use ε
-      }
+      intros x hx
+      have crux1 : x ∈ t1 := ht <| Hd hx.right
+      have crux2 : x ∈ t2 := ht2 <| dist_pos.mp hx.left
+      have : x ∈ t1 ∩ t2 := Set.mem_inter crux1 crux2
+      rw [← H] at this
+      exact this
     }
   }
+
+theorem neg_deriv_dec (f : ℝ → ℝ) (f' a : ℝ) : f' < 0 → HasDerivAt f f' a → ∃ δ > 0, ∀ x, 0 < x ∧ x < δ → f a > f (a + x) := by
+{
+  intros hf' hfd
+  rw [hasDerivAt_iff_tendsto_slope_zero] at hfd
+  apply tendsto_imp at hfd
+  specialize hfd (-f') (by linarith)
+  match hfd with
+  | ⟨δ, hd, Hd⟩ => {
+    use δ
+    use hd
+    intros x hx
+    specialize Hd x
+    simp only [sub_zero] at Hd
+    rw [abs_of_pos hx.left] at Hd
+    specialize Hd hx
+    have : -(-f') < x⁻¹ * (f (a + x) - f a) - f' ∧ x⁻¹ * (f (a + x) - f a) - f' < -f' := abs_lt.mp Hd
+    have : x⁻¹ * (f (a + x) - f a) < 0 := by linarith [this.right]
+    have : x * (x⁻¹ * (f (a + x) - f a)) < x*0 := by exact (mul_lt_mul_left hx.left).mpr this
+    rw [mul_zero, ← mul_assoc, mul_inv_cancel, one_mul] at this
+    linarith
+
+    linarith
+  }
 }
+
+#check hasDerivAt_deriv_iff
+
+
 example (a b : ℝ) (hab : a < b) (f : ℝ → ℝ) (hf : ContinuousOn f (Set.Icc a b)) (hf' : Differentiable ℝ f) :
   deriv f a < 0 → deriv f b > 0 → ∃ c ∈ Set.Ioo a b, deriv f c = 0 := by
   cases eq_or_ne (f a) (f b) with
@@ -270,8 +284,39 @@ example (a b : ℝ) (hab : a < b) (f : ℝ → ℝ) (hf : ContinuousOn f (Set.Ic
     | inl l => {
       suffices : Set.InjOn f (Set.Icc a b)
       intros ha hb
-      have := Inj_inc a b hab f l hf this
-      have := Convex.strictMonoOn_of_deriv_pos
+      have crux1 := Inj_inc a b hab f l hf this
+      have crux2 := neg_deriv_dec f (deriv f a) a ha (by {
+        have : deriv f a ≠ 0 := by exact LT.lt.ne ha
+        specialize hf' a
+        exact hasDerivAt_deriv_iff.mpr hf'
+      })
+      match crux2 with
+      | ⟨δ, hd, Hd⟩ => {
+        specialize Hd (min (δ / 2) (b - a)) (by {
+          apply And.intro
+          {
+            apply lt_min_iff.mpr
+            apply And.intro
+            linarith
+            linarith
+          }
+          apply min_lt_iff.mpr
+          left
+          linarith
+        })
+        have : a < min (a + δ / 2) b := by {
+          apply lt_min_iff.mpr
+          apply And.intro
+          linarith
+          exact hab
+        }
+        apply crux1 at this
+        simp only [add_sub_cancel'_right ,← min_add_add_left a (δ / 2) (b - a)] at Hd
+        linarith
+        exact Set.left_mem_Icc.mpr (le_of_lt hab)
+        simp
+        exact ⟨by linarith, by linarith⟩
+      }
     }
   }
 #check exists_deriv_eq_zero-- rolles theorem
