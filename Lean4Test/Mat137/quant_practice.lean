@@ -10,6 +10,7 @@ def shmdecreasing (f : ℝ → ℝ) := ∀ x : ℝ, ∃ y : ℝ, x < y ∧ f x >
 def increasing (f : ℝ → ℝ) := ∀ x y : ℝ, x < y → f x < f y
 def decreasing (f : ℝ → ℝ) := ∀ x y : ℝ, x < y → f x > f y
 def constant (f : ℝ → ℝ) := ∃ C : ℝ, ∀ x : ℝ, f x = C
+-- examjam 4 a)
 example : ∃ f : ℝ → ℝ, shmincreasing f ∧ ¬ increasing f := by
   use (fun x => x^2)
   apply And.intro
@@ -27,7 +28,16 @@ example : ∃ f : ℝ → ℝ, shmincreasing f ∧ ¬ increasing f := by
   use 0
   exact ⟨by norm_num, by norm_num⟩
 
+-- examjam 4 b)
+example (f : ℝ → ℝ) : increasing f → shmincreasing f := by
+  intro h
+  intro x
+  use x + 1
+  use (by linarith)
+  specialize h x (x + 1) (by linarith)
+  exact h
 
+-- examjam 4 c)
 #check FloorRing.floor
 example : ∃ f : ℝ → ℝ, ¬ constant f  ∧ ¬ increasing f ∧ ¬ shmincreasing f ∧ ¬ decreasing f := by
   use (fun x => ite (FloorRing.floor x = x) 0 1)
@@ -76,6 +86,7 @@ example : ∃ f : ℝ → ℝ, ¬ constant f  ∧ ¬ increasing f ∧ ¬ shmincr
   specialize h 0 1 (by linarith)
   simp at h
 
+-- examjam 4 e)
 example : ¬ (∃ f : ℝ → ℝ, shmincreasing f ∧ ∃ c : ℝ, ∀ x : ℝ, f x ≤ f c) := by
   intro ⟨f, ⟨hS, hM⟩⟩
   match hM with
@@ -88,6 +99,7 @@ example : ¬ (∃ f : ℝ → ℝ, shmincreasing f ∧ ∃ c : ℝ, ∀ x : ℝ,
     }
   }
 
+-- examjam 4 f)
 #check exists_deriv_eq_slope
 #check Continuous
 example (f : ℝ → ℝ) : Differentiable ℝ f → shmincreasing f → ∀ x : ℝ, ∃ y : ℝ, deriv f y > 0 := by
@@ -129,7 +141,7 @@ theorem Set.Infinite_of (S : Set ℝ) : (S.Nonempty ∧ ∀ x ∈ S, ∃ y ∈ S
     }
   }
 
-
+-- examjam 4 g)
 example (f : ℝ → ℝ) (hC : Continuous f) : shmincreasing f → shmdecreasing f → ∃ c : ℝ, {x | f x = c}.Infinite := by
   intros hsinc hsdec
   use f 0

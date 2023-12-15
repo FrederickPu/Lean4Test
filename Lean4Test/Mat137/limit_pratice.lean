@@ -5,6 +5,8 @@ import Mathlib.Tactic
 def limit (f : ℝ → ℝ) (a L : ℝ) := ∀ ε > 0, ∃ δ > 0, ∀ x : ℝ, 0 < |x - a| ∧ |x - a| < δ → |f x - L| < ε
 def limiti (f : ℝ → ℝ) (L : ℝ) := ∀ ε > 0, ∃ M > 0, ∀ x : ℝ, M < x → |f x - L| < ε
 
+-- Section 1: definition of limit and continuity
+-- 1 a)
 example : limit (fun x => x^2 + 2*x) 2 8 := by
   intros ε he
   use min (ε / 10) 1
@@ -53,6 +55,7 @@ example : limit (fun x => x^2 + 2*x) 2 8 := by
     _ ≤ 2 * (ε / 10) := by linarith [min_le_left (ε / 10) 1]
     _ < ε / 2 := by linarith
 
+-- 2
 #check Real.pi_le_four
 example (f g : ℝ → ℝ) (hg : ∀ x : ℝ, g x > 0): limiti (f * g) 3 → ∃ M > 0, ∀ x : ℝ, x > M → f x ≥ 2 / (Real.pi * g x) := by
   intro h
@@ -80,6 +83,7 @@ example (f g : ℝ → ℝ) (hg : ∀ x : ℝ, g x > 0): limiti (f * g) 3 → �
       _ = 2 / (Real.pi * g x) := div_div 2 Real.pi (g x)
   }
 
+-- 3
 example (f : ℝ → ℝ) (a : ℝ) (hf : f a > 0): limit f a (f a) → ∃ δ > 0, ∀ x : ℝ, |x - a| < δ → f x > 0 := by
   intro h
   specialize h (f a / 2) (by linarith)
@@ -98,5 +102,4 @@ example (f : ℝ → ℝ) (a : ℝ) (hf : f a > 0): limit f a (f a) → ∃ δ >
       have : - (f a / 2) < f x - f a ∧ f x - f a < f a / 2 := abs_lt.mp H
       linarith [this.left]
     }
-
   }
