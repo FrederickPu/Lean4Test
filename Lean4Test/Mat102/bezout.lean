@@ -33,3 +33,15 @@ example (x y : ℤ) : 19 ∣ 3*x + 7*y → 19 ∣ 43*x + 75*y := by
   exact Int.dvd_of_dvd_mul_right_of_gcd_one this rfl
   use 5*k - 2*y
   linarith
+
+#check Nat.gcd_eq_iff
+#check Nat.lcm_eq_iff
+example (a b : ℕ) : a*b = lcm a b * gcd a b := by
+{
+
+
+}
+
+open Nat
+example (m n : Nat) : Nat.gcd m n * Nat.lcm m n = m * n := by
+  rw [Nat.lcm, Nat.mul_div_cancel' (Nat.dvd_trans (Nat.gcd_dvd_left m n) (Nat.dvd_mul_right m n))]

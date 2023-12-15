@@ -9,22 +9,68 @@ import Mathlib.Tactic.Polyrith
 
 example (P : Prop) : P ∨ ¬P := by exact em P
 #check List.range
-def f (x : ℕ) : ℕ := Id.run do
+def f (l : List ℕ) : ℕ := Id.run do
   let mut out : ℕ := 0
-  for _ in List.range x do
+  for _ in l do
     out := out + 1
   return out
 
 #check List.ForIn.eq
-theorem lem :  ∀ n : ℕ, f n = n := by
- intro n
- simp [f]
- induction n with
- | zero => rfl
- | succ n hn => {
-  rw [List.range, List.range.loop]
- }
+#check List.range.loop
+#check List.forIn_eq_forIn
+#check List.forIn_cons
+#reduce (List.forIn_cons)
+#check Monad.sequence
+#check List.range_succ
+#check List.forIn_range_succ
+#check List.forIn'
+#check List.forIn'_eq_forIn -- strong induction?
+theorem woops (a : Nat) (l : List Nat) : a :: l = [a] ++ l := by exact rfl
+theorem lem : ∀ l : List ℕ, ∀ a : ℕ, (Id.run (forIn l a fun x r => ForInStep.yield (r + 1))) = List.length l + a := by
+{
+  intro l
+  induction l with
+  | nil => simp [Id.run]
+  | cons a l th => {
+    intro b
+    simp
+    have := th (b + 1)
+    rw [this]
+    rw [Nat.succ_eq_add_one]
+    ring
+  }
+}
+#check forIn
+example (l : List ℕ) : f l = l.length := by
+  simp only [f, pure]
+  have : ∀ a, Id.run (pure (l.length + a)) =
+  Id.run (
+  forIn l a fun x r => do
+  PUnit.unit
+  ForInStep.yield (r + 1)
+  ) := by {
+    simp
+    induction l with
+    | nil => {
+      intro a
+      simp [Id.run]
+    }
+    | cons b l th => {
+      intro a
+      simp
+      rw [← th (a+1)]
+      rw [Nat.succ_eq_add_one]
+      ring
+    }
+  }
+  have := this 0
+  rw [Id.bind_eq, ← this]
+  rfl
 
+  -- simp only [Id.bind_eq]
+  -- simp only [Id.pure_eq]
+  -- rw [lem l 0]
+  -- rfl
 
 example (α β x y y' : ℝ) (h : 2*(x^2+y^2)*(2*x + 2*y*y') = (α*2*x + β*2*y*y')) :
   (2*x^2*y+2*y^3 - β*y)*y' = -(2*x^3+2*x*y^2 - α*x) := by

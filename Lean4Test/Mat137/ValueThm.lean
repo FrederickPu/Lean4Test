@@ -58,6 +58,7 @@ theorem IVT_inc (a b M : ℝ) (hab : a < b) (f : ℝ → ℝ) (hf : ContinuousOn
     exact ⟨Ne.lt_of_le ha hc.left, Ne.lt_of_le hb hc.right⟩
     exact H
   }
+
 #check Real.ContinuousOn_neg
 #check Continuous.neg
 #check ContinuousOn.neg
@@ -320,7 +321,7 @@ example (a b : ℝ) (hab : a < b) (f : ℝ → ℝ) (hf : ContinuousOn f (Set.Ic
     simp only [Function.comp] at this
     exact this
   })
-  simp at this
+  simp only [neg_neg] at this
   specialize this h'.symm h
   rw [crux_invar (-b) hf', crux_invar (-a) hf'] at this
   simp at this
@@ -330,9 +331,7 @@ example (a b : ℝ) (hab : a < b) (f : ℝ → ℝ) (hf : ContinuousOn f (Set.Ic
   | ⟨c, hc⟩ => {
     use -c
     apply And.intro
-    apply And.intro
-    linarith [hc.left.right]
-    linarith [hc.left.left]
+    exact ⟨by linarith [hc.left.right], by linarith [hc.left.left]⟩
     rw [crux_invar c hf'] at hc
     linarith
   }
@@ -462,4 +461,3 @@ example (a b : ℝ) (hab : a < b) (f : ℝ → ℝ) (hf : ContinuousOn f (Set.Ic
 #check exists_deriv_eq_zero-- rolles theorem
 #check exists_deriv_eq_slope
 #check intermediate_value_Icc
-#check Set.hasMax
