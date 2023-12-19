@@ -45,9 +45,15 @@ example (a b : ℝ) (hab : a < b) : ∃ M ∈ (Set.Icc a b), ∀ x ∈ (Set.Icc 
 }
 
 #check Continuous
-theorem EVT (a b : ℝ) (hab : a < b) (f : ℝ → ℝ) (hf : Continuous f) :
---   ∃ c ∈ (Set.Icc a b), ∀ x ∈ (Set.Icc a b), f x ≤ f c := by
--- {
---   suffices : ((f '' (Set.Icc a b)).extremePoints ℝ).Nonempty
+-- theorem EVT (a b : ℝ) (hab : a < b) (f : ℝ → ℝ) (hf : Continuous f) :
+-- --   ∃ c ∈ (Set.Icc a b), ∀ x ∈ (Set.Icc a b), f x ≤ f c := by
+-- -- {
+-- --   suffices : ((f '' (Set.Icc a b)).extremePoints ℝ).Nonempty
 
--- }
+-- -- }
+
+variables (a b : Cauchy (@abs ℚ (infer_instance)))
+
+example : (ℕ → Bool) ↪ ℝ := by {
+
+}
