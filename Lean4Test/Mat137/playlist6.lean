@@ -32,8 +32,36 @@ theorem crux (a b L : ℝ) (hab : a < b) (H : ℝ → ℝ) (c : ℝ → ℝ) (hc
     exact Hd
   }
 
+#check deriv_const_mul
 theorem help (p : ℝ → ℝ → Prop) (h1 : ∀ a : ℝ, ∃ b : ℝ, p b a) : ∃ f : ℝ → ℝ, ∀ a, p (f a) a := by
   exact Classical.skolem.mp h1
+theorem cauchy_mvt (f g : ℝ → ℝ) (hf : Differentiable ℝ f) (hg : Differentiable ℝ g) (a b : ℝ) (hab : a < b) (hg1 : g b - g a ≠ 0) : ∃ c ∈ Set.Ioo a b, deriv f c * (g b - g a) = deriv g c * (f b - f a)  := by
+  let F := fun x => (g b - g a) * f x - (f b - f a) * g x - (g b * f a - f b * g a)
+  have w1 : F a = 0 := by {
+    simp [F]
+    ring
+  }
+  have w2 : F b = 0 := by {
+    simp [F]
+    ring
+  }
+  have : ∃ c ∈ Set.Ioo a b, deriv F c = 0 := exists_deriv_eq_zero hab (by {sorry}) (by linarith)
+  match this with
+  | ⟨c, hc, Hc⟩ => {
+    simp [F] at Hc
+
+    have h1 := DifferentiableAt.const_mul (hf c) (g b - g a)
+    have h2 := DifferentiableAt.const_mul (hg c) (f b - f a)
+
+    rw [deriv_sub (DifferentiableAt.sub h1 h2) (differentiableAt_const _), deriv_const, deriv_sub h1 h2] at Hc
+    rw [deriv_const_mul _ (hf c)] at Hc
+    rw [deriv_const_mul _ (hg c)] at Hc
+    rw [sub_zero] at Hc
+    use c
+    use hc
+    linarith only [Hc]
+  }
+
 example (f g : ℝ → ℝ) (a L δ : ℝ) (hd : δ > 0) (hf : DifferentiableOn ℝ f (Set.Ico a (a + δ))) (hg : DifferentiableOn ℝ g (Set.Ico a (a + δ))) :
  (∀ x ∈ Set.Ioo a (a + δ), g x ≠ 0) →  (∀ x ∈ Set.Ioo a (a + δ), deriv g x ≠ 0) → limitR f a 0 → limitR g a 0 → (limitR (deriv f / deriv g ) a L) → (limitR (fun x => (f x - f a)/ (g x - g a)) a L) := by
 {

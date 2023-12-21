@@ -119,6 +119,8 @@ theorem Ico_sum (f : ℕ → ℚ) (n m : ℕ) (hm : n ≤ m) : Finset.sum (Finse
 
 #check Nat.pow_log_le_self
 #check Int.log
+example (p : ℚ → Prop) (x y : Subtype (fun q => p q)) : x = y → x.val = y.val := by exact
+  fun a => congrArg Subtype.val a
 example (a : ℕ) (ha : a ≠ 0) : 2 ^ Nat.log 2 a ≤ a := Nat.pow_log_le_self 2 ha
 example (a b : ℕ) : a ≤ b → (a : ℚ) ≤ (b : ℚ) := by {
   intro H
@@ -179,7 +181,11 @@ example : (ℕ → Fin 2) ↪ ℝ :=
           have : 1 / (2:ℚ) ^ j  > 0 := by exact one_div_pos.mpr this
           linarith
         }
-      have : (-Int.log 2 ε) ≤ 0 := by {sorry}
+      have : (-Int.log 2 ε) ≤ 0 := by {
+        have : Int.log 2 (1:ℚ)  ≤ Int.log 2 ε := Int.log_mono_right (by linarith) (by linarith)
+        rw [Int.log_one_right] at this
+        linarith
+      }
       have : Int.toNat (-Int.log 2 ε) = 0 := by exact Int.toNat_eq_zero.mpr this
       rw [this]
       simp
@@ -198,4 +204,12 @@ example : (ℕ → Fin 2) ↪ ℝ :=
       exact le_of_lt <| pow_pos (by rfl) (i+1)
       exact hj
     }⟩
-  }, by {}⟩
+  }, by {
+    intro x y
+    intro h
+    simp at h
+    have w : := congrArg Subtype.val h
+
+  }⟩
+
+#check Real.mk
