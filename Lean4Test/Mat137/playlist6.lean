@@ -60,22 +60,16 @@ example (a b : ℝ) (hc : c ∈ Set.Ioo a b) : Set.Ioo a b ∈ nhds c := by {
 theorem help (p : ℝ → ℝ → Prop) (h1 : ∀ a : ℝ, ∃ b : ℝ, p b a) : ∃ f : ℝ → ℝ, ∀ a, p (f a) a := by
   exact Classical.skolem.mp h1
 theorem cauchy_mvt (f g : ℝ → ℝ) (a b : ℝ) (hab : a < b) (hfc : ContinuousOn f (Set.Icc a b)) (hfd : DifferentiableOn ℝ f (Set.Ioo a b)) (hgc : ContinuousOn g (Set.Icc a b)) (hgd : DifferentiableOn ℝ g (Set.Ioo a b)) (hg1 : ∀ x ∈ Set.Ioo a b, deriv g x ≠ 0) (hg2 : g b - g a ≠ 0): ∃ c ∈ Set.Ioo a b, deriv f c / deriv g c = (f b - f a) / (g b - g a) := by
-  let F := fun x => (g b - g a) * f x - (f b - f a) * g x - (g b * f a - f b * g a)
-  have w1 : F a = 0 := by {
-    simp [F]
-    ring
-  }
-  have w2 : F b = 0 := by {
+  let F := fun x => (g b - g a) * f x - (f b - f a) * g x
+  have w1 : F a = F b := by {
     simp [F]
     ring
   }
   have : ∃ c ∈ Set.Ioo a b, deriv F c = 0 := exists_deriv_eq_zero hab (by {
     apply ContinuousOn.sub
-    apply ContinuousOn.sub
     exact ContinuousOn.mul continuousOn_const hfc
     exact ContinuousOn.mul continuousOn_const hgc
-    exact continuousOn_const
-  }) (by linarith)
+  }) w1
   match this with
   | ⟨c, hc, Hc⟩ => {
     simp [F] at Hc
@@ -88,10 +82,9 @@ theorem cauchy_mvt (f g : ℝ → ℝ) (a b : ℝ) (hab : a < b) (hfc : Continuo
     have h1 : DifferentiableAt ℝ (fun x => (g b - g a) * f x) c := DifferentiableAt.const_mul hfc' (g b - g a)
     have h2 : DifferentiableAt ℝ (fun x => (f b - f a) * g x) c := DifferentiableAt.const_mul hgc' (f b - f a)
 
-    rw [deriv_sub (DifferentiableAt.sub h1 h2) (differentiableAt_const _), deriv_const, deriv_sub h1 h2] at Hc
+    rw [deriv_sub h1 h2] at Hc
     rw [deriv_const_mul _ hfc'] at Hc
     rw [deriv_const_mul _ hgc'] at Hc
-    rw [sub_zero] at Hc
     use c
     use hc
     field_simp [hg1 c hc]
