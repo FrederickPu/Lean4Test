@@ -40,17 +40,14 @@ macro_rules (kind := bigsum'_verbose)
 #check ∑ x = 1 ^ 10, 2 * x
 #check ∑ (x = 1) ^ 10, 2 * x
 
--- upper sum
 noncomputable def UpperSum {a b : ℝ} (P : Partition a b) (f : ℝ → ℝ) : ℝ :=
   ∑ (i = 1) ^ P.n, sSupOver (Set.Icc (P.ι (i - 1)) (P.ι i)) f
-
--- lower sum
 noncomputable def LowerSum {a b : ℝ} (P : Partition a b) (f : ℝ → ℝ) : ℝ :=
   ∑ (i = 1) ^ P.n, sInfOver (Set.Icc (P.ι (i - 1)) (P.ι i)) f
 
 #check Set.univ
+-- L_P ≤ \underline{I} ≤ \overline{I} ≤ U_P
 noncomputable def UpperIntegral (a b : ℝ) (f : ℝ → ℝ) : ℝ :=
-  sSup ((fun P => UpperSum P f) '' (Set.univ : Set (Partition a b)))
-
+  sInf ((fun P => UpperSum P f) '' (Set.univ : Set (Partition a b)))
 noncomputable def LowerIntegral (a b : ℝ) (f : ℝ → ℝ) : ℝ :=
-  sInf ((fun P => LowerSum P f) '' (Set.univ : Set (Partition a b)))
+  sSup ((fun P => LowerSum P f) '' (Set.univ : Set (Partition a b)))
