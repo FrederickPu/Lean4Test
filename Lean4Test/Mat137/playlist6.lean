@@ -1,6 +1,7 @@
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.Pi.bounds
 import Mathlib.Tactic
+import Aesop
 
 def limitR (f : ℝ → ℝ) (a L : ℝ) := ∀ ε > 0, ∃ δ > 0, ∀ x : ℝ, 0 < x - a ∧ x - a < δ → |f x - L| < ε
 
@@ -87,8 +88,9 @@ theorem cauchy_mvt (f g : ℝ → ℝ) (a b : ℝ) (hab : a < b) (hfc : Continuo
     rw [deriv_const_mul _ hgc'] at Hc
     use c
     use hc
-    field_simp [hg1 c hc]
-    linarith
+    aesop
+    -- field_simp [hg1 c hc]
+    -- linarith
   }
 
 -- specialize case of l'hopital's rule
