@@ -117,7 +117,7 @@ def BinaryTree.delete_smallest_lt : (t : BinaryTree) → t.isSearch → ∀ x �
       linarith [H.1 _ this,  H.2.1 x rr]
   }
 
-theorem BinaryTree.delete_smallest_isSearch : (t : BinaryTree) → t.isSearch →  t.delete_smallest.1.isSearch
+theorem BinaryTree.delete_smallest_isSearch : {t : BinaryTree} → t.isSearch →  t.delete_smallest.1.isSearch
 | nil => by {
   intro h
   simp [delete_smallest]
@@ -167,12 +167,12 @@ theorem BinaryTree.delete_root_isSearch : (B : BinaryTree) → B.isSearch → B.
     simp [delete_root]
     apply And.intro
     intro x hx
-    have := h.1 x hx
-    have := h.2.1 _ (delete_smallest_mem (mk rroot rleft rright) (by {
+    apply Nat.lt_trans
+    exact h.1 x hx
+    exact h.2.1 _ (delete_smallest_mem (mk rroot rleft rright) (by {
       use rroot
       apply root_mem
     }))
-    linarith
 
     apply And.intro
     intro y hy
@@ -180,7 +180,6 @@ theorem BinaryTree.delete_root_isSearch : (B : BinaryTree) → B.isSearch → B.
     exact this y hy
 
     use h.2.2.left
-    apply delete_smallest_isSearch
-    exact h.2.2.right
+    exact delete_smallest_isSearch h.2.2.right
   }
 }
