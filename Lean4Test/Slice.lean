@@ -77,3 +77,29 @@ example (b c : ℕ) (l : List ℝ) (hbc : b ≤ c) : l.slice 0 c = l.slice 0 b +
   rw [slice_eq_take_drop b c l hbc, slice_eq_take_take b c l hbc]
   simp only [List.slice, tsub_zero, List.drop_zero, List.take_append_drop]
 }
+
+def isGreaterThan0 (x : Nat) : IO Bool := do
+  IO.println s!"value: {x}"
+  return x > 0
+
+def f (x : Nat) : IO Unit := do
+  let c ← isGreaterThan0 x
+  if c then
+    IO.println s!"{x} is greater than 0"
+  else
+    pure ()
+  for i in List.range 10 do
+     IO.println s!"wow"
+  #check Id.run
+
+#print f
+
+
+-- always even loop invariant
+def f' (x : Nat) : IO (Subtype (fun x => ∃ k, x = 2*k)) :=
+  forIn (List.range 10) (⟨2, by {use 1}⟩ : Subtype (fun x => ∃ k, x = 2*k)) fun i r => do
+    pure (ForInStep.yield ⟨2*r, by {use r}⟩)
+
+#print f'
+
+#check Tree

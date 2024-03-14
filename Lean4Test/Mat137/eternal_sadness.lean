@@ -2,6 +2,16 @@ import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.Analysis.Convex.KreinMilman
 import Mathlib.Analysis.Asymptotics.Asymptotics
 
+example : (∃ x : ℝ, 2 * x = 1) → False := by
+{
+  intro w
+  match w with
+  | ⟨x, hx⟩ => {
+
+  }
+
+}
+
 example (a b : ℕ) : ¬ (a = b) ↔ a ≠ b := by library_search
 example (a L : ℝ) (f : ℝ → ℝ) : Filter.Tendsto f (nhdsWithin a {a}ᶜ) (nhds L) → (∀ ε > 0, ∃ δ > (0:ℝ), ∀ x : ℝ, 0 < |x - a| ∧ |x - a| < δ → |f x - L| < ε) := by
   rw [Filter.tendsto_def]
@@ -19,6 +29,12 @@ example (a L : ℝ) (f : ℝ → ℝ) : Filter.Tendsto f (nhdsWithin a {a}ᶜ) (
     simp; exact he
   })
   simp only [Metric.isOpen_iff] at h
+  w : ∃ x, P(x)
+  match w with
+  | ⟨x : α, h : P(x)⟩ => {
+
+  }
+  match
   match h with
   | ⟨t1, ⟨t, ht, Ht⟩, t2, ht2, H⟩ =>
   {
