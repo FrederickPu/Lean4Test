@@ -43,16 +43,14 @@ def BinaryTree.isSearch : BinaryTree → Prop
 def BinaryTree.delete_smallest_mem : (t : BinaryTree) → (∃ x : ℕ, x ∈ t) → t.delete_smallest.2 ∈ t
 | nil => by simp [delete_smallest, Membership.mem, contains]
 | mk root left right => by {
+  intro h
   match left, right with
   | nil, nil => simp [delete_smallest, Membership.mem, contains]
   | nil, mk rroot rleft rright => {
-    intro h
     simp [delete_smallest, Membership.mem, contains]
   }
   | mk lroot lleft lright, right =>{
-    intro h
-    apply Or.inr
-    apply Or.inl
+    apply Or.inr ∘ Or.inl
     apply delete_smallest_mem
     use lroot
     simp [Membership.mem, contains]
@@ -62,66 +60,39 @@ def BinaryTree.delete_smallest_sub : {t : BinaryTree} → {x | x ∈ t.delete_sm
 | nil => by simp [delete_smallest]
 | mk root left right => by {
   match left, right with
-  | nil, nil => {
-    intro h
-    simp
-    simp [Membership.mem, contains, delete_smallest]
-  }
-  | nil, mk rroot rleft rright => {
-    intro h
-    simp
-    simp [delete_smallest]
-    intro Hh
-    apply Or.inr
-    apply Or.inr
-    exact Hh
-  }
+  | nil, nil => tauto
+  | nil, mk rroot rleft rright => tauto
   | mk lroot lleft lright, _ =>
-  simp only [Set.setOf_subset_setOf]
   intro a ha
-  simp [Membership.mem, contains] at ha
+
   cases ha with
-  | inl l => {
-    rw [l]
-    simp [Membership.mem, contains]
-  }
+  | inl l => tauto
   | inr r => cases r with
-  | inl rl => {
+  | inl rl =>
     have := delete_smallest_sub rl
-    apply Or.inr
-    apply Or.inl
-    exact this
-  }
-  | inr rr => {
-    simp [Membership.mem, contains]
     tauto
-  }
+  | inr rr => tauto
 }
-def BinaryTree.root_mem (root : Nat) (left right : BinaryTree) : root ∈ mk root left right := by {
+def BinaryTree.root_mem (root : Nat) (left right : BinaryTree) : root ∈ mk root left right := by
   simp [Membership.mem, contains]
-}
+
 
 def BinaryTree.delete_smallest_lt : (t : BinaryTree) → t.isSearch → ∀ x ∈ t.delete_smallest.1, t.delete_smallest.2 < x
-| nil => by {
+| nil => by
   intro h x hx
   apply False.elim
   exact hx
-}
-| BinaryTree.mk root left right => by {
+| BinaryTree.mk root left right => by
   intro H x hx
   match left, right with
   | nil, nil => simp [delete_smallest, Membership.mem, contains] at hx
-  | nil, mk rroot rleft rright => {
-    rw [delete_smallest]
-    simp
+  | nil, mk rroot rleft rright =>
+    simp [delete_smallest]
     rw [delete_smallest] at hx
     rw [isSearch] at H
-    have := H.2.1 x hx
-    linarith
-  }
+    linarith [H.2.1 x hx]
   | mk lroot lleft lright, right => {
-    rw [delete_smallest]
-    simp
+    simp [delete_smallest]
     rw [isSearch] at H
     cases hx with
     | inl l => {
@@ -134,22 +105,17 @@ def BinaryTree.delete_smallest_lt : (t : BinaryTree) → t.isSearch → ∀ x �
       linarith
     }
     | inr r => cases r with
-    | inl rl => {
+    | inl rl =>
       apply BinaryTree.delete_smallest_lt
       exact H.2.2.1
       exact rl
-    }
-    | inr rr => {
+    | inr rr =>
       have := delete_smallest_mem (mk lroot lleft lright) (by {
         use lroot
         exact BinaryTree.root_mem lroot lleft lright
       })
-      have := H.1 _ this
-      have := H.2.1 x rr
-      linarith
-    }
+      linarith [H.1 _ this,  H.2.1 x rr]
   }
-}
 
 theorem BinaryTree.delete_smallest_isSearch : (t : BinaryTree) → t.isSearch →  t.delete_smallest.1.isSearch
 | nil => by {
@@ -186,7 +152,7 @@ theorem BinaryTree.mem_nil : ∀ x, x ∈ nil → False := by {
   intro x hx
   exact hx
 }
-theorem BinaryTree.wow : (B : BinaryTree) → B.isSearch → B.delete_root.isSearch
+theorem BinaryTree.delete_root_isSearch : (B : BinaryTree) → B.isSearch → B.delete_root.isSearch
 | nil => by {
   intro h
   simp [isSearch]
