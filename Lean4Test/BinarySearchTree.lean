@@ -4,10 +4,11 @@ inductive BinaryTree
 | nil : BinaryTree
 | mk (root : Nat) (left : BinaryTree) (right : BinaryTree) : BinaryTree
 
+#check List
 
 def BinaryTree.depth : BinaryTree → Nat
 | BinaryTree.nil => 0
-| BinaryTree.mk root left right => 1 + left.depth + right.depth
+| BinaryTree.mk _ left right => 1 + left.depth + right.depth
 
 def BinaryTree.delete_smallest : BinaryTree → (BinaryTree × Nat)
 | BinaryTree.mk root left right =>
@@ -18,7 +19,7 @@ def BinaryTree.delete_smallest : BinaryTree → (BinaryTree × Nat)
 | BinaryTree.nil => ⟨nil, 0⟩
 
 def BinaryTree.delete_root : BinaryTree → BinaryTree
-| BinaryTree.mk root left right =>
+| BinaryTree.mk _ left right =>
   match left, right with
   | nil, nil => BinaryTree.nil
   | nil, BinaryTree.mk rroot rleft rright => (BinaryTree.mk rroot rleft rright)
@@ -154,7 +155,7 @@ theorem BinaryTree.mem_nil : ∀ x, x ∈ nil → False := by {
 }
 theorem BinaryTree.delete_root_isSearch : (B : BinaryTree) → B.isSearch → B.delete_root.isSearch
 | nil => by {
-  intro h
+  intro _
   simp [isSearch]
 }
 | mk root left right => by {
