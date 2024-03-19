@@ -57,7 +57,7 @@ example (f : ℝ → ℝ) (g : ℝ → ℝ) : f ⋆ g = fun x ↦ ∫ t, f t * g
 example (f : ℝ → ℝ) (a b c : ℝ) (h1 : IntegrableOn f (Set.Ioo a b) volume) (h2 : IntegrableOn f (Set.Ioo b c) volume) (h3 : IntegrableOn f (Set.Ioo a c) volume) : a < b → b < c → ∫ x in a..b, f x  = ∫ x in (0 : ℝ)..b, f x  - ∫ x in (0 : ℝ)..a, f x := by
 {
   intros hab hbc
-  library_search
+  have : deriv (fun x => ∫ t in (0)..x, f t) = f := by library_search
 }
 example (f : ℝ → ℝ) (hf : IntegrableOn f Set.univ volume) : ∫ x in Set.univ, f x = ∫ x in (Set.Iio 0), f x + ∫ x in (Set.Ici 0), f x := by
 {
