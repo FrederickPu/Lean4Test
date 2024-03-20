@@ -54,6 +54,7 @@ theorem integral_subset_right (a b c : ℝ) (hab : a ≤ b) (hbc : b ≤ c) (f :
 -- F a a - sup = - F a c
 variables (a b : ℝ) (hab : a ≤ b) (f : ℝ → ℝ) (hf : ContinuousOn f (Set.uIcc a b)) (F : ℝ → ℝ → ℝ) (hF : ∀ c ∈ Set.Icc a b, F c = fun x => ∫ t in c..x, f t)
 
+-- question 3 a
 example : ∃ G : ℝ → ℝ, ∀ c ∈ Set.Icc a b, G ≠ F c := by
 {
   use (fun x => F a x - (sSup {F a c | c ∈ Set.Icc a b} + 1))
@@ -162,3 +163,70 @@ example : ∃ G : ℝ → ℝ, ∀ c ∈ Set.Icc a b, G ≠ F c := by
 }
 
 #check ContinuousOn.intervalIntegrable
+
+theorem atTop_nhds (a : ℝ) (f : ℝ → ℝ) : Filter.Tendsto f (Filter.atTop) (nhds a) ↔ ∀ ε > 0, ∃ N, ∀ x : ℝ, x ≥ N → |f x - a| < ε := by {
+  rw [Filter.tendsto_def]
+  apply Iff.intro
+  intro h ε he
+  have : Metric.ball a ε ∈ nhds a := Metric.ball_mem_nhds a he
+  specialize h _ this
+  simp only [Filter.mem_atTop_sets, Set.mem_preimage, Metric.mem_ball] at h
+  exact h
+
+  intro h
+  intro s hs
+  rw [mem_nhds_iff] at hs
+  match hs with
+  | ⟨t, ht, ⟨H, ha⟩⟩ => {
+    rw [Metric.isOpen_iff] at H
+    specialize H a ha
+    simp only [Filter.mem_atTop_sets, Set.mem_preimage]
+    match H with
+    | ⟨ε, he, H⟩ => {
+      specialize h ε he
+      match h with
+      | ⟨N, h⟩ => {
+        use N
+        intro x hx
+        specialize h x hx
+        specialize ht <| H h
+        exact ht
+      }
+    }
+  }
+}
+
+example (x : ℝ) : (∀ ε > 0, x < ε) → x ≤ 0 := by exact fun a => le_of_forall_lt' a
+def increasing (f : ℝ → ℝ) := ∀ x y : ℝ, x < y → f x < f y
+example (f : ℝ → ℝ) (hf : increasing f) (L : ℝ): Filter.Tendsto f Filter.atTop (nhds L) →
+  ∀ᶠ x in Filter.atTop, f x < L := by {
+  intro h
+  have : sSup (f '' Set.univ) = L := by {
+    have : sSup (f '' Set.univ) - L = 0 := by
+      suffices : ∀ ε > 0, sSup (f '' Set.univ) - L < ε
+      have := le_of_forall_lt' this
+      have : L ≤ sSup (f '' Set.univ) := by sorry
+      linarith
+
+      sorry
+    linarith
+  }
+  rw [← this]
+  simp
+  rw [atTop_nhds] at h
+  specialize h 1 (by linarith)
+  match h with
+  | ⟨N, H⟩ => {
+    use N
+    intro b hb
+    have := H (b + 1) (by linarith)
+    have : f (b + 1) ≤ sSup (f '' Set.univ) := by {  b bbnn,m,m
+      rw [Real.le_sSup_iff]
+      intro ε he
+      use (f (b + 2))
+      simp
+      have := hf (b + 1) (b + 2) (by linarith)
+      linarith..
+    }
+  }
+}
