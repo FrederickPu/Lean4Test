@@ -14,10 +14,54 @@ import Mathlib.MeasureTheory.Function.LocallyIntegrable
 -- then show ∫ g t - ∫ f t ≥ 0
 
 theorem integral_le (a b : ℝ) (hab : a ≤ b) (f g : ℝ → ℝ) (hf : IntervalIntegrable f MeasureTheory.volume a b)  (hg : IntervalIntegrable g MeasureTheory.volume a b): (∀ x ∈ Set.Icc a b, f x ≤ g x) → ∫ x in a..b, f x ≤ ∫ x in a..b, g x := by {
-  intro h
-  have : ∀ x ∈ Set.Icc a b, g x - f x ≥ 0 := by {
-    intro x hx
-    specialize h x hx
+intro h
+have : ∀ x ∈ Set.Icc a b, g x - f x ≥ 0 := by {
+  intro x hx
+  specialize h x hx
+    linarith
+  }
+
+  have : 0 ≤ ∫ x in a..b, g x - f x := intervalIntegral.integral_nonneg hab this
+  have : ∫ (x : ℝ) in a..b, g x - f x = (∫ (x : ℝ) in a..b, g x )- ∫ (x : ℝ) in a..b, f x := by {
+   have := intervalIntegral.integral_sub hg hf
+   simp at this
+   exact this
+  }
+  linarith
+}
+
+theorem integral_subset_right (a b c : ℝ) (hab : a ≤ b) (hbc : b ≤ c) (f : ℝ → ℝ) (hf1 : IntervalIntegrable f MeasureTheory.volume a b) (hf2 : IntervalIntegrable f MeasureTheory.volume b c) : (∀ x ∈ Set.Icc a c, f x ≥ 0) → ∫ x in a..b, f x ≤ ∫ x in a..c, f x := by {
+  intro hsub
+  have : ∫ (x : ℝ) in a..c, f x = (∫ (x : ℝ) in a..b, f x)  + ∫ (x : ℝ) in b..c, f x := by {
+    apply Eq.symm
+    exact intervalIntegral.integral_add_adjacent_intervals hf1 hf2
+  }
+  have : ∫ (x : ℝ) in b..c, f x ≥ 0 := by {
+    have : ∀ x ∈ Set.Icc b c, 0 ≤ f x := by {
+      intro x hx
+  specialize h x hx
+    linarith
+  }
+
+  have : 0 ≤ ∫ x in a..b, g x - f x := intervalIntegral.integral_nonneg hab this
+  have : ∫ (x : ℝ) in a..b, g x - f x = (∫ (x : ℝ) in a..b, g x )- ∫ (x : ℝ) in a..b, f x := by {
+   have := intervalIntegral.integral_sub hg hf
+   simp at this
+   exact this
+  }
+  linarith
+}
+
+theorem integral_subset_right (a b c : ℝ) (hab : a ≤ b) (hbc : b ≤ c) (f : ℝ → ℝ) (hf1 : IntervalIntegrable f MeasureTheory.volume a b) (hf2 : IntervalIntegrable f MeasureTheory.volume b c) : (∀ x ∈ Set.Icc a c, f x ≥ 0) → ∫ x in a..b, f x ≤ ∫ x in a..c, f x := by {
+  intro hsub
+  have : ∫ (x : ℝ) in a..c, f x = (∫ (x : ℝ) in a..b, f x)  + ∫ (x : ℝ) in b..c, f x := by {
+    apply Eq.symm
+    exact intervalIntegral.integral_add_adjacent_intervals hf1 hf2
+  }
+  have : ∫ (x : ℝ) in b..c, f x ≥ 0 := by {
+    have : ∀ x ∈ Set.Icc b c, 0 ≤ f x := by {
+      intro x hx
+  specialize h x hx
     linarith
   }
 

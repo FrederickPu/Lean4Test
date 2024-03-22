@@ -38,3 +38,118 @@ example (n : Nat) (factor : ℚ) : kevin n factor = fred n factor := by {
     ring
   }
 }
+
+#eval String.join ["hello", "mark"]
+#check List.join
+def List.join' {α : Type} (x : α): List (List α) → List α
+| nil => nil
+| a :: nil => a ++ nil
+| a :: b :: l => a ++ [x] ++ b ++ l.join' x
+
+theorem List.bruh {α : Type} (x a : α) (A : List α) : (L : List (List α)) → List.join' x ((a::A)::L) = a :: List.join' x (A::L)
+| nil => by simp [join']
+| B :: nil => by simp [join']
+| A :: B :: L => by simp [join']
+
+theorem wow : (l : List Nat) → (∀ n, n ∈ l → ∃ L : List (List Nat), (∀ x ∈ L, n ∉ x) ∧ (L.join' n = l))
+| List.nil => by {
+  intro n hn
+  simp at hn
+}
+| a :: List.nil => by {
+  intro n hn
+  simp at hn
+  rw [hn]
+  use [[], []]
+  simp [List.join']
+}
+| a :: l => by {
+  intro n hn
+  cases em (n = a) with
+  | inl hn1 => {
+    cases em (n ∈ l) with
+    | inl H => {
+      have := wow l n H
+      match this with
+      | ⟨L, hh⟩ => {
+        match L with
+        | List.nil => {
+          use []::[[]]
+          simp [List.join'] at hh
+          simp [List.join']
+          simp [hn1, hh]
+        }
+        | A :: L => {
+          use []::[]::A::L
+          simp [List.join', hh]
+          simp at hh
+          use hh.left.right
+        }
+      }
+    }
+    | inr H => {
+      simp [H] at hn
+      simp [hn]
+      use []::[]::l::[]
+      simp [List.join']
+      rw [← hn1]
+      exact H
+    }
+  }
+  | inr hn2 => {
+    cases em (n ∈ l) with
+    | inl H => {
+      have := wow l n H
+      match this with
+      | ⟨L, HL⟩ => {
+        match L with
+        | A :: L => {
+          use (a::A)::L
+          simp [hn2, HL]
+          simp at HL
+          use HL.left.right
+          simp [List.bruh]
+          exact HL.right
+        }
+        | List.nil => {
+          simp [List.join'] at HL
+          use [a]::List.nil
+          rw [← HL]
+          simp [List.join']
+          exact hn2
+        }
+      }
+    }
+    | inr H => {
+      use (a::l)::[]
+      simp [List.join', hn2, H]
+    }
+  }
+}
+
+theorem duh : (l : List Nat)  → ∀ n, n ∈ l → ∃ a b : List Nat, l = a ++ [n] ++ b
+| List.nil => by {
+  intro n hn
+  simp at hn
+}
+| List.cons x l => by {
+  have := duh l
+  intro n hn
+  simp at hn
+  cases hn with
+  | inl hl => {
+    use []
+    use l
+    simp
+    exact hl.symm
+  }
+  | inr hr => {
+    specialize this n hr
+    match this with
+    | ⟨a, b, H⟩ => {
+      use x :: a
+      use b
+      simp [H]
+    }
+  }
+}
