@@ -91,27 +91,23 @@ example (T : ℕ → ℝ) (h : ∀ n : ℕ, T n = (∫ x : ℝ in (0:ℝ)..(2*Re
       exact this
     }
     _ =  ((Real.cos (2*Real.pi))^[ℕ](2*n + 1 : ℕ)) * Real.sin (2*Real.pi)  -  ((Real.cos 0) ^[ℕ] (2*n + 1 : ℕ)) * Real.sin 0  - (2*n + 1 : ℕ) * ∫ (x : ℝ) in (0:ℝ)..(2*Real.pi), ((Real.cos x) ^[ℕ](2*n)) * (- Real.sin x) * Real.sin x := by {
-     have : (fun x :ℝ => ↑(2 * n + 1:ℕ) * ((Real.cos x) ^[ℕ] (2 * n)) * -Real.sin x * Real.sin x) = (fun x => ↑(2 * n + 1 :ℕ) * (((Real.cos x) ^[ℕ] (2 * n)) * -Real.sin x * Real.sin x)) := by {
+     have : (fun x :ℝ => ↑(2 * n + 1:ℕ) * ((Real.cos x) ^[ℕ] (2 * n)) * -Real.sin x * Real.sin x) = (fun x => ↑(2 * n + 1 :ℕ) * (((Real.cos x) ^[ℕ] (2 * n)) * -Real.sin x * Real.sin x)) := by
         ext x
         ring
-      }
      rw [this]
-     have :  (∫ (x : ℝ) in (0:ℝ)..(2 * Real.pi), (2 * n + 1 :ℕ) * (((Real.cos x) ^[ℕ] (2 * n)) * -Real.sin x * Real.sin x)) = (2*n + 1 : ℕ) * ∫ (x : ℝ) in (0:ℝ)..(2*Real.pi), ((Real.cos x) ^[ℕ](2*n)) * (- Real.sin x) * Real.sin x := by {
+     have :  (∫ (x : ℝ) in (0:ℝ)..(2 * Real.pi), (2 * n + 1 :ℕ) * (((Real.cos x) ^[ℕ] (2 * n)) * -Real.sin x * Real.sin x)) = (2*n + 1 : ℕ) * ∫ (x : ℝ) in (0:ℝ)..(2*Real.pi), ((Real.cos x) ^[ℕ](2*n)) * (- Real.sin x) * Real.sin x := by
       apply intervalIntegral.integral_const_mul
-     }
      rw [this]
     }
     _ = (2*n + 1 : ℕ) * T n - (2 * n + 1) * T (n + 1) := by {
-      have : (fun x:ℝ => ((Real.cos x) ^[ℕ](2*n)) * (- Real.sin x) * Real.sin x) = (fun x:ℝ => - (((Real.cos x) ^[ℕ](2*n)) * ((Real.sin x) ^[ℕ] 2))) := by {
+      have : (fun x:ℝ => ((Real.cos x) ^[ℕ](2*n)) * (- Real.sin x) * Real.sin x) = (fun x:ℝ => - (((Real.cos x) ^[ℕ](2*n)) * ((Real.sin x) ^[ℕ] 2))) := by
         ext x
         ring
-      }
       rw [this, intervalIntegral.integral_neg]
-      have : (fun (x : ℝ) => ((Real.cos x) ^[ℕ](2*n)) * (Real.sin x) ^[ℕ] 2) = (fun (x : ℝ) => (((Real.cos x) ^[ℕ] (2*n)) -((Real.cos x) ^[ℕ] 2*(n+1)))) := by {
+      have : (fun (x : ℝ) => ((Real.cos x) ^[ℕ](2*n)) * (Real.sin x) ^[ℕ] 2) = (fun (x : ℝ) => (((Real.cos x) ^[ℕ] (2*n)) -((Real.cos x) ^[ℕ] 2*(n+1)))) := by
         ext x
         rw [Real.sin_sq]
         ring
-      }
       rw [this]
       simp
       rw [intervalIntegral.integral_sub]
