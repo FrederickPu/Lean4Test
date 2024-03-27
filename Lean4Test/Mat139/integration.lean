@@ -3,6 +3,10 @@ import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import Mathlib.Topology.ContinuousOn
 import Mathlib.Analysis.SpecialFunctions.Integrals
 import Mathlib.Data.Complex.Exponential
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.InverseDeriv
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.InverseDeriv
+import Mathlib.Analysis.Calculus.ContDiff.Basic
+
 -- import Mathlib.MeasureTheory.Integral.IntervalIntegral
 
 #check @HPow.hPow ℝ ℕ ℝ instHPow Real.pi (2:ℕ)
@@ -121,6 +125,32 @@ example (T : ℕ → ℝ) (h : ∀ n : ℕ, T n = (∫ x : ℝ in (0:ℝ)..(2*Re
     }
 }
 
+#check Real.hasDerivAt_arcsin
+example (a b : ℝ) (hab : a ≤ b) (ha : 0 < a) (hb : b < 1) : (∫ x in a..b, 1 / Real.sqrt (1 - x^2)) = Real.arcsin  b - Real.arcsin a := by {
+  have : (fun x => 1 / Real.sqrt (1 - x^2)) = (fun x => deriv Real.arcsin x) := by {
+    rw [Real.deriv_arcsin]
+    simp
+  }
+  rw [this]
+  apply intervalIntegral.integral_eq_sub_of_hasDeriv_right_of_le
+  exact hab
+  apply Continuous.continuousOn
+  exact Real.continuous_arcsin
+  intro x hx
+  apply HasDerivAt.hasDerivWithinAt
+  simp only [Real.deriv_arcsin]
+  apply Real.hasDerivAt_arcsin
+  linarith [hx.left]
+  linarith [hx.right]
+
+  have : ContDiffOn ℝ 1 Real.arcsin ({-1, 1}ᶜ) := Real.contDiffOn_arcsin
+  have : ContDiffOn ℝ 1 Real.arcsin (Set.uIcc a b) := by sorry
+  have : ContinuousOn (deriv Real.arcsin) (Set.uIcc a b) := by {
+    apply ContDiffOn.continuousOn_deriv_of_isOpen
+
+  }
+}
+#check integral_eq_sub_of_hasDeriv_right_of_le
 #check intervalIntegral.integral_sub
 #check congr_fun
 #check HasDerivAt.comp -- chain rule
@@ -128,7 +158,7 @@ example (T : ℕ → ℝ) (h : ∀ n : ℕ, T n = (∫ x : ℝ in (0:ℝ)..(2*Re
 #check intervalIntegral.integral_comp_smul_deriv'
 #check Real.log_continuousOn
 #check ContinuousOn.mono
-
+#check Lean.Expr
 
 -- ∫ (x : ℝ) in a..b, f' x • (g ∘ f) x = ∫ (u : ℝ) in f a..f b, g u
 
