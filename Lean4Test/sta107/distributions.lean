@@ -3,6 +3,8 @@ import Mathlib.Analysis.SpecificLimits.Basic
 import Mathlib.Data.Nat.Choose.Vandermonde
 import Mathlib.Analysis.Calculus.Series
 import Mathlib.Analysis.Calculus.Deriv.Pow
+import Mathlib.Analysis.Calculus.Deriv.Inv
+
 
 
 #check Commute.add_pow
@@ -44,6 +46,8 @@ example (r : NNReal) (hr : r < 1) : ∑' (n : ℕ), (1 - r) * r ^ n = 1 := by {
 theorem Nat.choose_def (n k : Nat) : Nat.choose (n + 1) (k + 1) = Nat.choose n k + Nat.choose n (k + 1) :=
   by rfl
 
+example (a : ℝ) : a⁻¹ = 1 / a := by exact inv_eq_one_div a
+
 example (p: NNReal) (hp0: 0 < p) (hp1: p < 1) :
   ∑' (n : ℕ), ↑n * (1 - p) ^ n * p = 0 := by {
 
@@ -64,6 +68,8 @@ theorem HockeyStick : (k r : Nat) → (Finset.range (k + 1)).sum (fun i => Nat.c
   rw [add_right_comm k 1 r, add_comm]
   exact rfl
 
+example (x : ℝ) (f g : ℝ → ℝ) (hf : DifferentiableAt ℝ f x) (hg : DifferentiableAt ℝ g x) :
+  f =ᶠ[nhds x] g → deriv f x = deriv g x := by exact fun a => Filter.EventuallyEq.deriv_eq a
 theorem bruh (p : ℝ) (hp0 : 0 < p) (hp1 : p < 1) : (r : ℕ) →
   (∑' (n : ℕ), Nat.choose (n + r) (r) * (1 - p) ^ n * p^(r+1) = 1)
  | 0 => by {
@@ -83,6 +89,105 @@ theorem bruh (p : ℝ) (hp0 : 0 < p) (hp1 : p < 1) : (r : ℕ) →
   linarith
 }
  | Nat.succ r => by {
+  have crux :  ∑' (n : ℕ), (Nat.choose (n + r) (r+1) * (1 - p) ^ n) = (1 - p) * (p^(r + 2))⁻¹ := by
+  {
+    calc
+      _ = ∑' (n : ℕ), (n / (r + 1:ℕ) * Nat.choose (n + r) r * (1 - p) ^ n) := by {
+        apply congrArg
+        ext n
+        have : (r + 1 : ℝ) ≠ 0 := by linarith
+        field_simp only
+        rw [mul_right_comm, ← Nat.cast_mul]
+        rw [Nat.choose_succ_right_eq]
+        simp [add_tsub_cancel_right]
+        left
+        ring
+      }
+      _ = (1 - p) / (r + 1) * ∑' (n : ℕ), Nat.choose (n + r) r * (n * (1 - p) ^ (n - 1)) := by {
+        rw [← tsum_mul_left]
+        apply congrArg
+        ext n
+        cases n with
+        | zero => simp
+        | succ n => {
+          rw [pow_succ]
+          simp
+          ring
+        }
+      }
+      _ =  (1 - p) / (r + 1) * ∑' (n : ℕ), (-1)*deriv (fun p:ℝ => Nat.choose (n + r) r * (1 - p) ^ n) p := by {
+        apply congrArg
+        apply congrArg
+        ext n
+        have h2: DifferentiableAt ℝ (fun p:ℝ => p^n) (1-p:ℝ) := differentiableAt_pow n
+        have h: DifferentiableAt ℝ (fun p:ℝ => 1 - p) p := by
+         rw [differentiableAt_const_sub_iff]
+         exact differentiableAt_id'
+
+        -- have h : deriv (fun p:ℝ => 1 - p) p = -1 := by
+        --   rw [deriv_const_sub]
+        --   simp only [deriv_id'']
+        have := deriv.comp p h2 h
+        simp at this
+        rw [deriv_const_sub, deriv_id''] at this
+        simp only [Function.comp] at this
+        rw [deriv_const_mul, this]
+        ring
+
+        exact DifferentiableAt.comp p h2 h
+      }
+      _ =  (1 - p) / (r + 1) * (-1) * ∑' (n : ℕ), deriv (fun p:ℝ => Nat.choose (n + r) r * (1 - p) ^ n) p := by {
+      rw [tsum_mul_left]
+      ring
+     }
+      _ = (1 - p) / (r + 1) * (-1) * deriv (fun p:ℝ => (∑' (n : ℕ), Nat.choose (n + r) r * (1 - p) ^ n)) p := by {
+      apply congrArg
+      sorry
+     }
+      _ = (1 - p) / (r + 1) * (-1) * deriv (fun p:ℝ => (1 / p^(r + 1))) p := by {
+      apply congrArg
+
+      apply Filter.EventuallyEq.deriv_eq
+      simp [Filter.EventuallyEq]
+      rw [eventually_nhds_iff]
+      -- |1/2 - p| < ε => -ε < 1/2 - p < ε => 1/2 - ε < p < 1/2 + ε
+      -- 1 / 2 - ε  = 1 / 2 - 1/ 2 = 0
+      -- 1/2 + ε = 1/ 2 + 1/ 2= 1
+      use Metric.ball (1 / 2) (1 / 2)
+      apply And.intro
+      intro x hx
+      simp only [Metric.ball, dist, Set.mem_setOf_eq] at hx
+      rw [abs_sub_lt_iff] at hx
+      have := bruh x (by linarith [hx.left]) (by linarith [hx.right]) r
+      rw [tsum_mul_right] at this
+      have w : x ≠ 0 := by linarith [hx.left, hx.right]
+      field_simp
+      rw [this]
+
+      apply And.intro
+      exact Metric.isOpen_ball
+      simp only [Metric.ball, dist, Set.mem_setOf_eq]
+      rw [abs_sub_lt_iff]
+      apply And.intro
+      linarith
+      linarith
+     }
+      _ = (1 - p) / (r + 1) * (-1) * (-(r+1) * (p^(r + 2))⁻¹) := by {
+      apply congrArg
+      have : (fun p:ℝ => 1 / p ^ (r + 1)) = (fun p:ℝ => (p ^ (r + 1))⁻¹) := by
+        ext x
+        rw [← inv_eq_one_div]
+      rw [this, deriv_inv'', deriv_pow]
+      simp
+      field_simp
+      ring
+
+      exact differentiableAt_pow (r + 1)
+      have : p ≠ 0 := by linarith
+      exact pow_ne_zero (r + 1) this
+    }
+      _ = (1 - p) * (p^(r + 2))⁻¹ := by field_simp; ring
+  }
   calc
     _ = ∑' (n : ℕ), (Nat.choose (n + r + 1) (r + 1)) * (1 - p) ^ n * p ^ (r + 1 + 1) := by {
       apply congrArg
@@ -106,81 +211,26 @@ theorem bruh (p : ℝ) (hp0 : 0 < p) (hp1 : p < 1) : (r : ℕ) →
       push_cast
       ring
 
-      sorry
-      sorry
-    }
-    _ = p * 1 + p ^ (r + 1 + 1) * ∑' (n : ℕ), (n / (r + 1:ℕ) * Nat.choose (n + r) r * (1 - p) ^ n) := by {
-      rw [bruh p hp0 hp1]
-      rw [add_left_cancel_iff]
-      apply congrArg
-      apply congrArg
-      ext n
-      have : (r + 1 : ℝ) ≠ 0 := by linarith
-      field_simp only
-      rw [mul_right_comm, ← Nat.cast_mul]
-      rw [Nat.choose_succ_right_eq]
-      simp [add_tsub_cancel_right]
-      left
-      ring
-    }
-    _ = p * 1 + p ^ (r + 1 + 1) / (r + 1:ℕ) * (1 - p) *  ∑' (n : ℕ), Nat.choose (n + r) r * (n * (1 - p) ^ (n - 1)) := by {
-      apply congrArg
-      rw [← tsum_mul_left, ← tsum_mul_left]
-      apply congrArg
-      ext n
-      have : (r + 1 : ℝ) ≠ 0 := by linarith
-      field_simp
-      cases n with
-      | zero => {
-        simp
-      }
-      | succ n => {
-        simp
-        rw [Nat.succ_eq_add_one]
-        ring
-      }
-    }
-    _ = p * 1 + p ^ (r + 1 + 1) / (r + 1:ℕ) * (1 - p) *  ∑' (n : ℕ), (-1)*deriv (fun p:ℝ => Nat.choose (n + r) r * (1 - p) ^ n) p := by {
-      have : ∀ n : ℕ, -1 * deriv (fun p:ℝ => ↑(Nat.choose (n + r) r) * (1 - p) ^ n) p = ↑(Nat.choose (n + r) r) * (n * (1 - p) ^ (n - 1)) := by  {
-        intro n
-        have h2: DifferentiableAt ℝ (fun p:ℝ => p^n) (1-p:ℝ) := differentiableAt_pow n
-        have h: DifferentiableAt ℝ (fun p:ℝ => 1 - p) p := by
-         rw [differentiableAt_const_sub_iff]
-         exact differentiableAt_id'
+      apply Summable.mul_left
+      have := bruh p hp0 hp1 r
+      apply by_contradiction
+      intro h
+      simp [tsum_def, h] at this
 
-        -- have h : deriv (fun p:ℝ => 1 - p) p = -1 := by
-        --   rw [deriv_const_sub]
-        --   simp only [deriv_id'']
-        have := deriv.comp p h2 h
-        simp at this
-        rw [deriv_const_sub, deriv_id''] at this
-        simp only [Function.comp] at this
-        rw [deriv_const_mul, this]
-        ring
+      apply Summable.mul_left
+      apply by_contradiction
+      intro h
+      simp [tsum_def, h] at crux
 
-        exact DifferentiableAt.comp p h2 h
-      }
-      rw [← funext this]
+      cases crux with
+      | inl l => linarith
+      | inr r => linarith
     }
-    _  = p - p ^ (r + 1 + 1) / (r + 1:ℕ) * (1 - p) *  ∑' (n : ℕ), deriv (fun p:ℝ => Nat.choose (n + r) r * (1 - p) ^ n) p := by {
-      rw [tsum_mul_left]
-      ring
-    }
-    _ =  p - p ^ (r + 1 + 1) / (r + 1:ℕ) * (1 - p) *  deriv (fun p:ℝ => (∑' (n : ℕ), Nat.choose (n + r) r * (1 - p) ^ n)) p := by {
-      sorry -- do fderiv majic
-    }
-    _ =  p - p ^ (r + 1 + 1) / (r + 1:ℕ) * (1 - p) *  deriv (fun p:ℝ => (1 / p^(r + 1))) p := by {
-      have : (fun p:ℝ => ∑' (n : ℕ), Nat.choose (n + r) r * (1 - p) ^ n) = (fun p:ℝ => (1 / p^(r + 1))) := by {
-        ext x
-        sorry
-      }
-      rw [this]
-    }
-    _ =  p - p ^ (r + 1 + 1) / (r + 1:ℕ) * (1 - p) *  (-(r+1) * (p^(r + 2))⁻¹) := by {
-      have : deriv (fun p:ℝ => (1 / p^(r + 1))) p = -(r + 1) * (p^(r + 2))⁻¹ := by sorry
-      rw [this]
+    _ = p * ∑' (n : ℕ), (Nat.choose (n + r) r * (1 - p) ^ n * p ^ (r+1)) + p ^ (r + 1 + 1) * ((1 - p) * (p^(r + 2))⁻¹) := by {
+      rw [crux]
     }
     _ = 1 := by {
+      rw [bruh p hp0 hp1 r]
       have : p ≠ 0 := by linarith
       field_simp
       ring
