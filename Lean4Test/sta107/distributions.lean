@@ -32,6 +32,7 @@ theorem binomial_dist (n : Nat) {F : Type} [Field F] (p : F) :  (Finset.sum (Fin
   ring
 }
 
+#check NormedRing.tsum_geometric_DualNumber
 example (r : NNReal) (hr : r < 1) : ∑' (n : ℕ), (1 - r) * r ^ n = 1 := by {
   have w := tsum_geometric_nnreal hr
   have : (1 - r) * ∑' (n : ℕ), r ^ n  = ∑' (n : ℕ), (1 - r) * r ^ n := by exact
@@ -75,8 +76,9 @@ theorem deriv_tsum {𝕜 F : Type*} [IsROrC 𝕜] [NormedAddCommGroup F] [Comple
     (hg' : ∀ n y, ‖deriv (g n) y‖ ≤ u n) (hg0 : Summable fun n => g n y₀) :
     (deriv fun y => ∑' n, g n y) = fun y => ∑' n, deriv (g n) y := by
   sorry
-  -- ext1 x
-  -- exact deriv_tsum_apply hu hg hg' hg0 x
+theorem hasDerivAt_tsum_of_isPreconnected {α : Type u_1} {𝕜 : Type u_3} {F : Type u_5} [RCLike 𝕜] [NormedAddCommGroup F] [CompleteSpace F] {u : α → ℝ} [NormedSpace 𝕜 F] {g : α → 𝕜 → F} {g' : α → 𝕜 → F} {t : Set 𝕜} {y₀ : 𝕜} {y : 𝕜} (hu : Summable u) (ht : IsOpen t) (h't : IsPreconnected t) (hg : ∀ (n : α), ∀ y ∈ t, HasDerivAt (g n) (g' n y) y) (hg' : ∀ (n : α), ∀ y ∈ t, ‖g' n y‖ ≤ u n) (hy₀ : y₀ ∈ t) (hg0 : Summable fun (n : α) => g n y₀) (hy : y ∈ t) :
+HasDerivAt (fun (z : 𝕜) => ∑' (n : α), g n z) (∑' (n : α), g' n y) y := by
+  sorry
 
 #check deriv_tsum_apply
 
@@ -125,7 +127,8 @@ theorem crux' (p : ℝ) (hp : p ∈ Set.Ioo 0 1) (r : ℕ)
       simp only [f] at this
       exact congrFun this p
 
-      sorry -- apply deriv_tsum
+      apply hasDerivAt_tsum_of_isPreconnected
+      -- apply hasDerivAt_tsum
     }
     _ = (-1) * deriv (fun p:ℝ => (1 / p^(r + 1))) p := by {
       apply congrArg

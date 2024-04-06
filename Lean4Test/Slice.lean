@@ -103,3 +103,4 @@ def f' (x : Nat) : IO (Subtype (fun x => ∃ k, x = 2*k)) :=
 #print f'
 
 #check Tree
+#check List.sorted

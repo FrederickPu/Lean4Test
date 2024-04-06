@@ -169,6 +169,7 @@ def Tree.depth : Tree → Nat
 | Tree.root _ => 1
 | Tree.cons t T => max (t.depth + 1) T.depth
 
+-- a list whose elements are provably "in" `l`
 def List.wrap {α : Type} : (l : List α) → List (Subtype (fun x : α => x ∈ l))
 | [] => []
 | a :: l =>

@@ -32,6 +32,7 @@ def Tree.set_root : Tree → Nat → Tree
 | Tree.root n, _root => Tree.root _root
 | Tree.cons t T, _root => Tree.cons t (T.set_root _root)
 
+
 def Tree.get_root : Tree → Option Nat
 | Tree.nil => none
 | Tree.root n => some n
