@@ -277,19 +277,63 @@ example (x : ℤ₁₂) : (⟦5⟧ :  ℤ₁₂) * x + ⟦3⟧ = (⟦7⟧ : ℤ�
 -- b) has solution
 -- we want 12 ∣ (3x + 6) = 3(x + 2)
 -- so x + 2 is divisible by 4
--- that is x = -2
-example : ∃ (x : Quotient z12), (⟦3⟧ :  ℤ₁₂) * x + ⟦11⟧ = (⟦5⟧ : ℤ₁₂) := by
-  use ⟦-2⟧
-  simp [mk_mul, mk_add]
-  simp [HasEquiv.Equiv, Setoid.r]
+theorem q6b_aux (x : ℤ) : (⟦3⟧ :  ℤ₁₂) * ⟦x⟧ + ⟦11⟧ = (⟦5⟧ : ℤ₁₂) ↔ 4 ∣ (x + 2) := by
+  simp [mk_mul, mk_add, HasEquiv.Equiv, Setoid.r]
+  have : 3 * x + 11 - 5 = 3 * (x + 2) := by ring
+  rw [this]
+  have : 12 = 3 * (4 : ℤ) := by ring
+  rw [this]
+  have w : 4 ∣ (x + 2) → 3 * 4 ∣ 3 * (x + 2) := by exact fun a => mul_dvd_mul_left 3 a
+  have w1 : 3 * 4 ∣ 3 * (x + 2)  → 4 ∣ 3 * (x + 2) := by exact fun a => dvd_of_mul_left_dvd a
+  have w1' : 4 ∣ 3 * (x + 2) → 4 ∣ (x + 2) :=
+   fun a => Int.dvd_of_dvd_mul_right_of_gcd_one a (by rfl)
+  rw [← Iff.intro w (w1' ∘ w1)]
+
+theorem q7b_full_cond (x : ℤ₁₂) : (⟦3⟧ :  ℤ₁₂) * x + ⟦11⟧ = (⟦5⟧ : ℤ₁₂) ↔ x = ⟦2⟧ ∨ x = ⟦6⟧ ∨ x = ⟦10⟧ :=
+    (fun p x => x p) x.exists_rep <| fun ⟨x', hx⟩ => by
+  simp [← hx, q6b_aux, HasEquiv.Equiv, Setoid.r]
+  apply Iff.intro
+
+  · intro ⟨k, hk⟩
+    have w : 2 ≡ -10 [ZMOD 4 * 3] := by rfl
+    have w1 : x' + 2 ≡ x' + -10 [ZMOD 4 * 3] := by exact Int.ModEq.add rfl w
+
+    mod_cases h : k % 3
+    · have : 4 * k ≡ 4 * 0 [ZMOD (4 * 3)] := by exact Int.ModEq.mul_left' h
+      simp at this
+      rw [← hk] at this
+      have : x' + -10 ≡ 0  [ZMOD 4 * 3] := by exact Int.ModEq.trans (id (Int.ModEq.symm w1)) this
+      exact Or.inr ∘ Or.inr <|
+        Int.modEq_zero_iff_dvd.mp this
+    · have wee : 4 * k ≡ 4 * 1 [ZMOD (4 * 3)] := by exact Int.ModEq.mul_left' h
+      simp at wee
+      rw [← hk] at wee
+      have : x' ≡ 10 + 4 [ZMOD 4 * 3] := by exact Int.ModEq.add_right_cancel w wee
+      exact Or.inl <|
+        Int.ModEq.dvd (id (Int.ModEq.symm this))
+    · have wee : 4 * k ≡ 4 * 2 [ZMOD (4 * 3)] := by exact Int.ModEq.mul_left' h
+      rw [← hk] at wee
+      have : x' ≡ 10 + 4 * 2 [ZMOD 4 * 3] := by exact Int.ModEq.add_right_cancel w wee
+      exact Or.inr ∘ Or.inl <|
+        Int.ModEq.dvd (id (Int.ModEq.symm this))
+  · intro h
+    apply Or.elim3 h
+    · intro ⟨k, hk⟩
+      use (3*k + 1)
+      linarith
+    · intro ⟨k, hk⟩
+      use (3 * k + 2)
+      linarith
+    · intro ⟨k, hk⟩
+      use (3 * k + 3)
+      linarith
 
 -- c) has solution
 -- -11 ≈ 1
 -- we can use 5 since 5^2 = 25 ≈ 1
 example : ∃ (x : Quotient z12), x * x  = -(⟦11⟧ : ℤ₁₂) := by
   use ⟦5⟧
-  simp [Neg.neg, mk_mul]
-  simp [HasEquiv.Equiv, Setoid.r]
+  simp [Neg.neg, mk_mul, HasEquiv.Equiv, Setoid.r]
 
 end q4
 
