@@ -279,10 +279,8 @@ example (x : ℤ₁₂) : (⟦5⟧ :  ℤ₁₂) * x + ⟦3⟧ = (⟦7⟧ : ℤ�
 -- so x + 2 is divisible by 4
 theorem q6b_aux (x : ℤ) : (⟦3⟧ :  ℤ₁₂) * ⟦x⟧ + ⟦11⟧ = (⟦5⟧ : ℤ₁₂) ↔ 4 ∣ (x + 2) := by
   simp [mk_mul, mk_add, HasEquiv.Equiv, Setoid.r]
-  have : 3 * x + 11 - 5 = 3 * (x + 2) := by ring
-  rw [this]
-  have : 12 = 3 * (4 : ℤ) := by ring
-  rw [this]
+  rw [show 3 * x + 11 - 5 = 3 * (x + 2) by ring,
+      show 12 = 3 * (4 : ℤ) by ring]
   have w : 4 ∣ (x + 2) → 3 * 4 ∣ 3 * (x + 2) := by exact fun a => mul_dvd_mul_left 3 a
   have w1 : 3 * 4 ∣ 3 * (x + 2)  → 4 ∣ 3 * (x + 2) := by exact fun a => dvd_of_mul_left_dvd a
   have w1' : 4 ∣ 3 * (x + 2) → 4 ∣ (x + 2) :=
