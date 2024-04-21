@@ -295,27 +295,24 @@ theorem q7b_full_cond (x : ℤ₁₂) : (⟦3⟧ :  ℤ₁₂) * x + ⟦11⟧ = 
   apply Iff.intro
 
   · intro ⟨k, hk⟩
-    have w : 2 ≡ -10 [ZMOD 4 * 3] := by rfl
-    have w1 : x' + 2 ≡ x' + -10 [ZMOD 4 * 3] := by exact Int.ModEq.add rfl w
+    have w1 : x' + 2 ≡ x' + -10 [ZMOD 4 * 3] := Int.ModEq.add rfl (by rfl)
 
     mod_cases h : k % 3
-    · have : 4 * k ≡ 4 * 0 [ZMOD (4 * 3)] := by exact Int.ModEq.mul_left' h
-      simp at this
-      rw [← hk] at this
-      have : x' + -10 ≡ 0  [ZMOD 4 * 3] := by exact Int.ModEq.trans (id (Int.ModEq.symm w1)) this
-      exact Or.inr ∘ Or.inr <|
-        Int.modEq_zero_iff_dvd.mp this
-    · have wee : 4 * k ≡ 4 * 1 [ZMOD (4 * 3)] := by exact Int.ModEq.mul_left' h
-      simp at wee
+    · have : 4 * k ≡ 4 * 0 [ZMOD (4 * 3)] := Int.ModEq.mul_left' h
+      simp [← hk] at this
+      apply Or.inr ∘ Or.inr ∘ Int.modEq_zero_iff_dvd.mp
+      exact show x' + -10 ≡ 0 [ZMOD 4 * 3] from
+        Int.ModEq.trans (id (Int.ModEq.symm w1)) this
+    · have wee : 4 * k ≡ 4 * 1 [ZMOD (4 * 3)] := Int.ModEq.mul_left' h
+      simp [← hk] at wee
+      apply Or.inl ∘ Int.ModEq.dvd ∘ id ∘ Int.ModEq.symm
+      exact show  x' ≡ 10 + 4 [ZMOD 4 * 3]
+        from Int.ModEq.add_right_cancel rfl wee
+    · have wee : 4 * k ≡ 4 * 2 [ZMOD (4 * 3)] := Int.ModEq.mul_left' h
       rw [← hk] at wee
-      have : x' ≡ 10 + 4 [ZMOD 4 * 3] := by exact Int.ModEq.add_right_cancel w wee
-      exact Or.inl <|
-        Int.ModEq.dvd (id (Int.ModEq.symm this))
-    · have wee : 4 * k ≡ 4 * 2 [ZMOD (4 * 3)] := by exact Int.ModEq.mul_left' h
-      rw [← hk] at wee
-      have : x' ≡ 10 + 4 * 2 [ZMOD 4 * 3] := by exact Int.ModEq.add_right_cancel w wee
-      exact Or.inr ∘ Or.inl <|
-        Int.ModEq.dvd (id (Int.ModEq.symm this))
+      apply Or.inr ∘ Or.inl ∘ Int.ModEq.dvd ∘ id ∘ Int.ModEq.symm
+      exact show x' ≡ 10 + 4 * 2 [ZMOD 4 * 3]
+        from Int.ModEq.add_right_cancel rfl wee
   · intro h
     apply Or.elim3 h
     · intro ⟨k, hk⟩
