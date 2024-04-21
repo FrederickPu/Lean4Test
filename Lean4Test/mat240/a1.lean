@@ -253,6 +253,10 @@ instance : Neg (Quotient z12) :=
 
 def mk_mul (a b : ℤ) : (⟦a⟧: Quotient z12) * ⟦b⟧ = ⟦a * b⟧ := by rfl
 def mk_add (a b : ℤ) : (⟦a⟧: Quotient z12) + ⟦b⟧ = ⟦a + b⟧ := by rfl
+def mk_neg (a : ℤ) : -(⟦a⟧: Quotient z12) = ⟦-a⟧ := by
+  simp only [Neg.neg, show Int.neg 1 = -1 by rfl, mk_mul, neg_mul, one_mul]
+
+
 
 -- a) has solution
 -- want ⟦5⟧ x = ⟦4⟧
@@ -277,7 +281,7 @@ example (x : ℤ₁₂) : (⟦5⟧ :  ℤ₁₂) * x + ⟦3⟧ = (⟦7⟧ : ℤ�
 -- b) has solution
 -- we want 12 ∣ (3x + 6) = 3(x + 2)
 -- so x + 2 is divisible by 4
-theorem q6b_aux (x : ℤ) : (⟦3⟧ :  ℤ₁₂) * ⟦x⟧ + ⟦11⟧ = (⟦5⟧ : ℤ₁₂) ↔ 4 ∣ (x + 2) := by
+theorem q4b_aux (x : ℤ) : (⟦3⟧ :  ℤ₁₂) * ⟦x⟧ + ⟦11⟧ = (⟦5⟧ : ℤ₁₂) ↔ 4 ∣ (x + 2) := by
   simp [mk_mul, mk_add, HasEquiv.Equiv, Setoid.r]
   rw [show 3 * x + 11 - 5 = 3 * (x + 2) by ring,
       show 12 = 3 * (4 : ℤ) by ring]
@@ -287,9 +291,9 @@ theorem q6b_aux (x : ℤ) : (⟦3⟧ :  ℤ₁₂) * ⟦x⟧ + ⟦11⟧ = (⟦5�
    fun a => Int.dvd_of_dvd_mul_right_of_gcd_one a (by rfl)
   rw [← Iff.intro w (w1' ∘ w1)]
 
-theorem q7b_full_cond (x : ℤ₁₂) : (⟦3⟧ :  ℤ₁₂) * x + ⟦11⟧ = (⟦5⟧ : ℤ₁₂) ↔ x = ⟦2⟧ ∨ x = ⟦6⟧ ∨ x = ⟦10⟧ :=
+theorem q4b_full_cond (x : ℤ₁₂) : (⟦3⟧ :  ℤ₁₂) * x + ⟦11⟧ = (⟦5⟧ : ℤ₁₂) ↔ x = ⟦2⟧ ∨ x = ⟦6⟧ ∨ x = ⟦10⟧ :=
     (fun p x => x p) x.exists_rep <| fun ⟨x', hx⟩ => by
-  simp [← hx, q6b_aux, HasEquiv.Equiv, Setoid.r]
+  simp [← hx, q4b_aux, HasEquiv.Equiv, Setoid.r]
   apply Iff.intro
 
   · intro ⟨k, hk⟩
@@ -324,11 +328,285 @@ theorem q7b_full_cond (x : ℤ₁₂) : (⟦3⟧ :  ℤ₁₂) * x + ⟦11⟧ = 
       linarith
 
 -- c) has solution
+-- ⟦x⟧^2 = -⟦11⟧
+-- ⟦x⟧^2 - ⟦1⟧ = 0
+-- (⟦x⟧ - ⟦1⟧) * (⟦x⟧ + ⟦1⟧) = 0
+-- 12 ∣ (x - 1) * (x + 1)
+-- so we have :
+-- 1 ∣ (x + 1), 12 ∣ (x - 1)
+-- 3 ∣ (x + 1), 4 ∣ (x - 1)
+-- 2 ∣ (x + 1), 6 ∣ (x - 1)
+-- 6 ∣ (x + 1), 2 ∣ (x - 1)
+-- 4 ∣ (x + 1), 3 ∣ (x - 1)
+-- 12 ∣ (x + 1), 1 ∣ (x - 1)
 -- -11 ≈ 1
 -- we can use 5 since 5^2 = 25 ≈ 1
-example : ∃ (x : Quotient z12), x * x  = -(⟦11⟧ : ℤ₁₂) := by
-  use ⟦5⟧
-  simp [Neg.neg, mk_mul, HasEquiv.Equiv, Setoid.r]
+theorem q4c_aux1 (x : ℤ) : ⟦x⟧ * ⟦x⟧  = -(⟦11⟧ : ℤ₁₂) ↔ 12 ∣ (x + 1) * (x - 1) := by
+  calc
+    _ ↔ ⟦x * x + -1⟧ = (⟦0⟧:Quotient z12) := by
+      rw [mk_mul]
+      have : -(⟦11⟧ : Quotient z12) = (⟦1⟧:Quotient z12) := by
+        simp [Neg.neg, mk_mul, HasEquiv.Equiv, Setoid.r]
+      rw [this]
+      simp [HasEquiv.Equiv, Setoid.r]
+      ring_nf
+    _ ↔ 12 ∣ (x + 1) * (x - 1) := by
+      simp [HasEquiv.Equiv, Setoid.r]
+      ring_nf
+
+theorem Or.elim6 (A1 A2 A3 A4 A5 A6 P : Prop) (h1 : A1 → P) (h2 : A2 → P) (h3 : A3 → P) (h4 : A4 → P) (h5 : A5 → P) (h6 : A6 → P) : (A1 ∨ A2 ∨ A3 ∨ A4 ∨ A5 ∨ A6) → P := by {
+  tauto
+}
+
+theorem Or.elim6' {A1 A2 A3 A4 A5 A6 P : Prop} (H : A1 ∨ A2 ∨ A3 ∨ A4 ∨ A5 ∨ A6) (h1 : A1 → P) (h2 : A2 → P) (h3 : A3 → P) (h4 : A4 → P) (h5 : A5 → P) (h6 : A6 → P) : P := by {
+  tauto
+}
+
+
+theorem q4c_aux2 (x : ℤ) :12 ∣ (x + 1) * (x - 1) ↔
+  1 ∣ (x + 1) ∧ 12 ∣ (x - 1) ∨
+  3 ∣ (x + 1) ∧ 4 ∣ (x - 1) ∨
+  2 ∣ (x + 1) ∧ 6 ∣ (x - 1) ∨
+  6 ∣ (x + 1) ∧ 2 ∣ (x - 1) ∨
+  4 ∣ (x + 1) ∧ 3 ∣ (x - 1) ∨
+  12 ∣ (x + 1) ∧ 1 ∣ (x - 1) := by
+  {
+    apply Iff.intro
+    · intro h
+      -- rw [dvd_mul] at h
+      have : (12 : ℤ).natAbs ∣ ((x + 1) * (x - 1)).natAbs :=
+        Int.natAbs_dvd_natAbs.mpr h
+      rw [Int.natAbs_mul (x + 1) (x - 1)] at this
+      rw [dvd_mul] at this
+      match this with
+      | ⟨d₁, d₂, H⟩ => {
+        have :  d₁ ∈ Nat.divisors 12 := by
+          have h := H.2.2
+          rw [show Int.natAbs 12 = 12 by rfl] at h
+          simp
+          use d₂
+        have crux : Nat.divisors 12 = {Int.natAbs 1, Int.natAbs 2, Int.natAbs 3, Int.natAbs 4, Int.natAbs 6, Int.natAbs 12} := by rfl
+        rw [crux] at this
+        simp only [Finset.mem_singleton, Finset.mem_insert] at this
+        have wow := H.2.2
+        apply Or.elim6' this
+        · intro h
+          have : d₂ = Int.natAbs 12 := by
+            rw [h] at wow
+            simp [Int.natAbs] at *
+            linarith
+          rw [h, this] at H
+          exact Or.inl <|
+            ⟨Int.natAbs_dvd_natAbs.mp H.1, Int.natAbs_dvd_natAbs.mp H.2.1⟩
+        · intro h
+          have : d₂ = Int.natAbs 6 := by
+            rw [h] at wow
+            simp [Int.natAbs] at *
+            linarith
+          rw [h, this] at H
+          exact Or.inr ∘ Or.inr ∘ Or.inl <|
+            ⟨Int.natAbs_dvd_natAbs.mp H.1, Int.natAbs_dvd_natAbs.mp H.2.1⟩
+        · intro h
+          have : d₂ = Int.natAbs 4 := by
+            rw [h] at wow
+            simp [Int.natAbs] at *
+            linarith
+          rw [h, this] at H
+          have : 4 ∣ (x - 1) :=
+            Int.natAbs_dvd_natAbs.mp H.2.1
+          have : 3 ∣ (x + 1) :=
+            Int.natAbs_dvd_natAbs.mp H.1
+          tauto
+        · intro h
+          have : d₂ = Int.natAbs 3 := by
+            rw [h] at wow
+            simp [Int.natAbs] at *
+            linarith
+          rw [h, this] at H
+          exact Or.inr ∘ Or.inr ∘ Or.inr ∘ Or.inr ∘ Or.inl <|
+            ⟨Int.natAbs_dvd_natAbs.mp H.1, Int.natAbs_dvd_natAbs.mp H.2.1⟩
+        · intro h
+          have : d₂ = Int.natAbs 2 := by
+            rw [h] at wow
+            simp [Int.natAbs] at *
+            linarith
+          rw [h, this] at H
+          exact Or.inr ∘ Or.inr ∘ Or.inr ∘ Or.inl <|
+            ⟨Int.natAbs_dvd_natAbs.mp H.1, Int.natAbs_dvd_natAbs.mp H.2.1⟩
+        · intro h
+          have : d₂ = Int.natAbs 1 := by
+            rw [h] at wow
+            simp [Int.natAbs] at *
+            linarith
+          rw [h, this] at H
+          exact Or.inr ∘ Or.inr ∘ Or.inr ∘ Or.inr ∘ Or.inr <|
+            ⟨Int.natAbs_dvd_natAbs.mp H.1, Int.natAbs_dvd_natAbs.mp H.2.1⟩
+      }
+
+    apply Or.elim6
+    all_goals
+    · intro ⟨h1, h2⟩
+      exact mul_dvd_mul h1 h2
+  }
+
+theorem q4c_aux_1_12 (x : ℤ) : 1 ∣ (x + 1) ∧ 12 ∣ (x - 1) ↔ 12 ∣ (x - 1) := by {
+  have : 1 ∣ x + 1 := by exact one_dvd (x + 1)
+  tauto
+}
+-- x + 1 = 3, 6, 9, 12 ↔ x = 2, 5, 8, 11
+-- x - 1 = 4, 8, 12 ↔ x = 5, 9, 1
+
+-- a = 2, b = 6
+-- 2 ∣ (x + 1), 6 ∣ (x - 1)
+-- 4 * x ≡ -8
+-- x ≡ -2
+theorem q4c_aux_a_b (x : ℤ) (a b : ℤ) : a ∣ (x + 1) ∧ b ∣ (x - 1) → (b - a) / gcd a b * x ≡ -(a + b) / gcd a b [ZMOD a * b / gcd a b]  := by {
+  · intro h
+    have := h.left
+    have : (x + 1) ≡ 0 [ZMOD a] :=
+      Dvd.dvd.modEq_zero_int h.left
+    have H1 : (b / gcd a b) * (x + 1) ≡ (b / gcd a b) * 0 [ZMOD (b / (gcd a b)) * a] :=
+      Int.ModEq.mul_left' this
+    have : (x - 1) ≡ 0 [ZMOD b] :=
+      Dvd.dvd.modEq_zero_int h.right
+    have H2 : (a / gcd a b) * (x - 1) ≡ (a / gcd a b) * 0 [ZMOD ((a / gcd a b) * b)] :=
+      Int.ModEq.mul_left' this
+    rw [show (b / gcd a b) * a = a * b / gcd a b by {
+      rw [mul_comm, Int.mul_ediv_assoc _ (gcd_dvd_right a b)]
+    }] at H1
+    rw [show (a / gcd a b) * b = a * b / gcd a b by {
+      rw [mul_comm, ← Int.mul_ediv_assoc _ (gcd_dvd_left a b), mul_comm]
+    }] at H2
+    rw [mul_zero] at *
+    have : b / (gcd a b) * (x + 1) ≡ a / (gcd a b) * (x - 1) [ZMOD (a * b) / gcd a b] :=
+      Int.ModEq.trans H1 (id (Int.ModEq.symm H2))
+    have : (a * b / gcd a b) ∣ (b / gcd a b * (x + 1) - a / gcd a b * (x - 1)) :=
+      Int.ModEq.dvd (id (Int.ModEq.symm this))
+    have w : b / gcd a b * (x + 1) - a / gcd a b * (x - 1) = (b - a) / gcd a b  * x - - (a + b) / gcd a b := by {
+      sorry
+    }
+    rw [w, ← Int.modEq_iff_dvd] at this
+    exact id (Int.ModEq.symm this)
+}
+
+example (x : ℤ) : 1 ∣ (x + 1) ∧ 12 ∣ (x - 1) ↔ x ≡ 1 [ZMOD 12] := by
+  have : 1 ∣ (x + 1) := one_dvd (x + 1)
+  simp [this]
+  rw [Int.modEq_iff_dvd]
+  apply Iff.intro
+  all_goals
+    intro h
+    exact dvd_sub_comm.mp h
+
+example (x : ℤ) : 12 ∣ (x + 1) ∧ 1 ∣ (x - 1) ↔ x ≡ 11 [ZMOD 12] := by
+  simp [one_dvd (x - 1)]
+  rw [Int.modEq_iff_dvd]
+  apply Iff.intro
+  · intro h
+    -- dvd_sub_comm.mp h
+    have : 12 ∣ 12 - (x + 1) := by
+      rw [dvd_sub_self_left]
+      exact h
+    ring_nf at this
+    exact this
+  · intro h
+    have : 12 ∣ 12 - (11 - x) := by
+      rw [dvd_sub_self_left]
+      exact h
+    ring_nf at this
+    rw [add_comm] at this
+    exact this
+
+example (x : ℤ) : 2 ∣ (x + 1) ∧ 6 ∣ (x - 1) ↔ x ≡ 1 [ZMOD 12] ∨ x ≡ 7 [ZMOD 12] := by
+apply Iff.intro
+· intro h
+  have := q4c_aux_a_b _ _  _ h
+  rw [show gcd (2 : ℤ) 6  = 2 by rfl] at this
+  norm_num [show (4:ℤ) / 2 = 2 by rfl, show (-8:ℤ) / 2 = -4 by rfl, show (12:ℤ) / 2 = 6 by rfl] at this
+  rw [Int.modEq_iff_dvd, show -4 -2* x = -2*(x + 2) by ring, neg_mul, dvd_neg, show (6 : ℤ) = 2 * 3 by rfl] at this
+  rw [mul_dvd_mul_iff_left (by simp only)] at this
+  match this with
+  | ⟨k, hk⟩ =>
+    mod_cases k % 4
+    · rw [Int.modEq_iff_dvd, show 0 - k = -k by ring, dvd_neg] at H
+      match H with
+      | ⟨k', hk'⟩ =>
+        have : x + 1 = 2 * (6 * k') + (-1) := by linarith
+        rw [this] at h
+        have : 2 ∣ 2 * (6 * k') :=
+          Int.dvd_mul_right 2 (6 * k')
+        rw [dvd_add_right this] at h
+        simp at h
+    · rw [Int.modEq_iff_dvd, show 1 - k = -(k - 1) by ring, dvd_neg] at H
+      match H with
+      | ⟨k', hk'⟩ =>
+        have : x = 3 * k - 2 := by linarith
+        have w : k = 4*k' + 1 := by linarith
+        apply Or.inl
+        rw [Int.modEq_iff_dvd, this, w, show 1 - (3 * (4 * k' + 1) - 2) = - (12 * k') by ring, dvd_neg]
+        exact Int.dvd_mul_right 12 k'
+    · rw [Int.modEq_iff_dvd, show 2 - k = -(k - 2) by ring, dvd_neg] at H
+      match H with
+      | ⟨k', hk'⟩ =>
+        have : x - 1 = 6 * (2 * k') + 3 := by linarith
+        have hh := h.right
+        rw [this, dvd_add_right] at hh
+        simp only at hh
+        exact Int.dvd_mul_right 6 (2 * k')
+    · rw [Int.modEq_iff_dvd, show 3 - k = -(k - 3) by ring, dvd_neg] at H
+      match H with
+      | ⟨k', hk'⟩ =>
+        have w1 : x = 3*k - 2 := by linarith
+        have w2 : k = 4 * k' + 3 := by linarith
+        apply Or.inr
+        rw [Int.modEq_iff_dvd, w1, w2]
+        ring_nf
+        rw [mul_comm, dvd_neg]
+        exact Int.dvd_mul_right 12 k'
+· intro h
+  cases h with
+  | inl l =>
+    rw [Int.modEq_iff_dvd, show (12 : ℤ) = (6 * 2) by rfl, dvd_sub_comm] at l
+    apply And.intro
+    · have : 2 ∣ (x - 1) + 2 :=
+        Int.dvd_add (dvd_of_mul_left_dvd l) (Int.dvd_refl 2)
+      rw [show (x - 1) + 2 = x + 1 by ring] at this
+      exact this
+    exact dvd_of_mul_right_dvd l
+  | inr r =>
+    rw [Int.modEq_iff_dvd, show (12 : ℤ) = (6 * 2) by rfl, dvd_sub_comm] at r
+    apply And.intro
+    · have : 2 ∣ x - 7 := dvd_of_mul_left_dvd r
+      rw [show x + 1 = x - 7 + 8 by ring, dvd_add_right this]
+      simp only
+    · have : 6 ∣ x - 7 := dvd_of_mul_right_dvd r
+      rw [show x - 1 = x - 7 + 6 by ring, dvd_add_right this]
+
+example (x : ℤ) : 3 ∣ (x + 1) ∧ 4 ∣ (x - 1) ↔ x ≡ 5 [ZMOD 12]  := by
+apply Iff.intro
+· intro h
+  apply q4c_aux_a_b _ _ _ at h
+  norm_num [show gcd (3:ℤ) 4 = 1 by rfl] at h
+  exact h
+
+· intro h
+  rw [Int.modEq_iff_dvd, show (12 : ℤ) = 3 * 4 by rfl] at h
+  have h3 := dvd_of_mul_right_dvd h
+  have h4 := dvd_of_mul_left_dvd h
+  apply And.intro
+  · have : 3 ∣ 6 - (5 - x) := by exact Int.dvd_sub (show 3 ∣ (6:ℤ) by simp only) h3
+    rw [show 6 - (5 - x) = x + 1 by ring] at this
+    exact this
+  · have : 4 ∣ 4 - (5 - x) := by exact Int.dvd_sub (show 4 ∣ (4:ℤ) by simp only) h4
+    rw [show 4 - (5 - x) = x - 1 by ring] at this
+    exact this
+
+example (x : ℤ) : 4 ∣ (x + 1) ∧ 3 ∣ (x - 1) ↔ x ≡ 7 [ZMOD 12]  := by
+  apply Iff.intro
+  intro h
+  apply q4c_aux_a_b _ _ _ at h
+  norm_num [show gcd (4:ℤ) 3 = 1 by rfl] at h
+  exact h
 
 end q4
 
@@ -336,6 +614,31 @@ section q5q6
 
 def r (n : ℤ) (x y : ℤ) : Prop := n ∣ (x - y)
 
+instance lmao {n : ℤ} : Equivalence (r n) :=
+{
+  refl := by
+    simp only [r, sub_self, dvd_zero, forall_const]
+  symm := by
+    intro x y h
+    exact dvd_sub_comm.mp h
+  trans := by
+    simp [r]
+    intro x y z h1 h2
+    have : n ∣ (x - y) + (y - z) :=
+      Int.dvd_add h1 h2
+    ring_nf at this
+    exact this
+}
+
+example (n : ℤ) : Equivalence (r n) := lmao
+
+example (n : ℤ) : Equivalence (r n) := inferInstance
+/-
+type class instance expected
+  Equivalence (r n)
+-/
+
+-- need to use Quot instead of Quotient so we can use multiple equivalence relations on the same type `ℤ`
 def F.mul_equiv_mul {n : ℤ} {a b c d : ℤ} : r n a c → r n b d → r n (a * b) (c * d) := by
   intro h1 h2
   have w1 : n ∣ b * (a - c) :=
@@ -433,15 +736,7 @@ example (n : ℤ) (x : ℤ) : Int.gcd n x = 1 ↔ ∃ x' : (Quot (r n)), (Quot.m
         have : Int.gcd n x ≥ 1 := by linarith
         exact le_antisymm w this
     }
-    apply Equivalence.mk
-    · simp [r]
-    · intro x y h; exact dvd_sub_comm.mp h
-
-    intro x y z h1 h2
-    have : n ∣ (x - y) + (y - z) :=
-      Int.dvd_add h1 h2
-    simp at this
-    exact this
+    exact lmao
   }
 }
 
@@ -521,7 +816,7 @@ theorem nsmul_bruh {p : Nat} (n : Nat) : AddMonoid.nsmul n (Quot.mk (r p) 1) = Q
 
 -- Q6 a) character of a ℤ[p]
 -- Note would be better to use `charP` to make it more inline with mathlib4
-example {p : Nat} : Smallest (fun (n : Nat) => AddMonoid.nsmul n (Quot.mk (r p) 1) = (0 : Quot (r p))) p := by
+example {p : Nat} (hp : p > 0): Smallest (fun (n : Nat) => AddMonoid.nsmul n (Quot.mk (r p) 1) = (0 : Quot (r p)) ∧ n > 0) p := by
 {
   apply And.intro
   simp only
@@ -529,18 +824,9 @@ example {p : Nat} : Smallest (fun (n : Nat) => AddMonoid.nsmul n (Quot.mk (r p) 
   rw [Quot.eq]
   rw [Equivalence.eqvGen_eq]
   simp [r]
+  exact hp
 
-  -- cringe stuff
-  apply Equivalence.mk
-  · simp [r]
-  · intro x y h; exact dvd_sub_comm.mp h
-
-  intro x y z h1 h2
-  have : (p:ℤ) ∣ (x - y) + (y - z) :=
-    Int.dvd_add h1 h2
-  simp at this
-  exact this
-  -- cringe stuff
+  exact lmao
 
   intro b h
   apply by_contradiction
@@ -548,16 +834,53 @@ example {p : Nat} : Smallest (fun (n : Nat) => AddMonoid.nsmul n (Quot.mk (r p) 
   intro h'
   rw [nsmul_bruh, zero_eq, Quot.eq, Equivalence.eqvGen_eq] at h
   simp [r] at h
-  have : p ∣ b := by exact Int.ofNat_dvd.mp h
+  have : p ∣ b := by exact Int.ofNat_dvd.mp h.1
   match this with
   | ⟨k, hk⟩ => {
-    have w : k > 0 := by sorry
-    have : p = b / k :=by exact (Nat.div_eq_of_eq_mul_left w hk).symm
+    have w : k > 0 := by
+      apply by_contradiction
+      simp
+      intro hw
+      simp [hw] at hk
+      linarith
+    have : p = b / k := by exact (Nat.div_eq_of_eq_mul_left w hk).symm
     have : b / k ≤ b := Nat.div_le_self b k
     linarith
   }
+  exact lmao
+}
 
-  sorry -- boring equivalence stuff
+
+-- Q6 b) if a field has a non-zero characteristic, it is prime
+example {F : Type*} [Field F] : ∀ p : Nat, Smallest (fun (n : Nat) => AddMonoid.nsmul n (1 : F) = (0 : F) ∧ n > 0) p → Prime p := by {
+  intro p ⟨⟨hp1, hp1'⟩, hp2⟩
+  rw [← Nat.irreducible_iff_prime]
+  apply Irreducible.mk
+  · cases em (p = 1) with
+    | inl l =>
+      simp only [l, nsmul_eq_smul, one_smul, one_ne_zero] at hp1
+    | inr r =>
+      simp [Nat.isUnit_iff, r]
+
+  · intro a b h
+
+    rw [h] at hp1
+    simp only [nsmul_eq_smul, nsmul_eq_mul, Nat.cast_mul, mul_one, mul_eq_zero] at hp1
+
+    wlog ha : (a : F) = 0 with IH
+    · have := @IH F _ p hp1' hp2 b a (by linarith [h]) (by tauto) (by tauto)
+      tauto
+    · simp at hp2
+      rw [h] at hp1'
+      simp only [CanonicallyOrderedCommSemiring.mul_pos] at hp1'
+      have ha' : a > 0 := hp1'.left
+      have hb : b > 0 := hp1'.right
+      specialize hp2 a ha ha'
+      have : a ≤ a * b :=
+        Nat.le_mul_of_pos_right hb
+      rw [show p = a by linarith] at h
+      exact Or.inr ∘ Nat.isUnit_iff.mpr <|
+        (Nat.mul_right_eq_self_iff ha').mp (id h.symm)
 }
 end q5q6
 
