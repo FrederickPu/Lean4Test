@@ -1,4 +1,5 @@
 import Mathlib.Algebra.Field.Defs
+import Mathlib.NumberTheory.Zsqrtd.GaussianInt
 import Mathlib.Tactic
 
 section q1q2
@@ -467,7 +468,8 @@ theorem nsmul_bruh {p : Nat} (n : Nat) : AddMonoid.nsmul n (Quot.mk (r p) 1) = Q
   }
 }
 
--- character of a ℤ[p]
+-- Q6 a) character of a ℤ[p]
+-- Note would be better to use `charP` to make it more inline with mathlib4
 example {p : Nat} : Smallest (fun (n : Nat) => AddMonoid.nsmul n (Quot.mk (r p) 1) = (0 : Quot (r p))) p := by
 {
   apply And.intro
@@ -503,5 +505,47 @@ example {p : Nat} : Smallest (fun (n : Nat) => AddMonoid.nsmul n (Quot.mk (r p) 
     have : b / k ≤ b := Nat.div_le_self b k
     linarith
   }
+
+  sorry -- boring equivalence stuff
 }
 end q5q6
+
+section q7
+
+open Complex
+
+def conj (x : Complex):= (starRingEnd _) x
+
+-- a)
+example  (z : Complex) : (1 - 2 * I) * conj z = - I * (1 - I) ↔ z = ⟨(normSq (1 - I * 2))⁻¹, (normSq (1 - I * 2))⁻¹ * 3⟩   := by {
+  apply Iff.intro
+  intro h
+  have : (1 - 2 * I) ≠ 0 := by simp [Complex.ext_iff]
+  have w : conj z = (- I * (1 - I)) / (1 - 2 * I) :=
+    CancelDenoms.cancel_factors_eq_div h this
+  rw [Complex.ext_iff] at w
+  rw [Complex.div_re, Complex.div_im] at w
+  simp at w
+  ring_nf at w
+  rw [conj, Complex.conj_re, Complex.conj_im] at w
+  have w1 : z.im = ((normSq (1 - I * 2))⁻¹ * 3) := by linarith [w.right]
+  have : z = ⟨z.re, z.im⟩ := by exact rfl
+  rw [w.left, w1] at this
+  exact this
+
+  intro h
+  rw [h, Complex.ext_iff]
+  apply And.intro
+
+  simp [Complex.add_im, Complex.mul_im, Complex.mul_re, conj, Complex.conj_re, Complex.mul_re]
+  simp [normSq]
+  norm_num
+
+  simp [Complex.add_im, Complex.mul_im, Complex.mul_re, conj, Complex.conj_re, Complex.mul_re]
+  simp [normSq]
+  norm_num
+}
+
+
+
+end q7
