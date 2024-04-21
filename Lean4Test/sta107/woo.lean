@@ -121,8 +121,49 @@ example (x : ℝ) : (∑' (n : Nat), n * x^n) = x * TrivSqZeroExt.snd (∑' (n :
 
 noncomputable instance : Div (DualNumber ℝ) :=
 {
-  div := fun ⟨a, b⟩ ⟨c, d⟩ => ⟨a/c, (b*c - a*d)/c^2⟩
+  div := fun ⟨a, b⟩ ⟨c, d⟩ => ⟨(a/c), (b*c - a*d)/c^2⟩
 }
+
+theorem div_eq (a b : DualNumber ℝ) : a / b = ⟨(a.fst / b.fst), (a.snd * b.fst - a.fst * b.snd) / b.fst^2⟩ := by rfl
+
+theorem add_eq (a b : DualNumber ℝ) : a + b = ⟨a.fst + b.fst, a.snd + b.snd⟩ := by rfl
+
+theorem diff_eq (a b : DualNumber ℝ) : a - b = ⟨a.fst - b.fst, a.snd - b.snd⟩ := by exact rfl
+
+#check congr_fun₂
+example (f : ℝ → ℝ → ℝ) (a b c d : ℝ) : a = c → b = d → f a b = f c d := by
+{
+  intros
+  library_search
+}
+theorem sum_one_div (a b : DualNumber ℝ) (ha : a.fst ≠ 0) (hb : b.fst ≠ 0) : 1 / a + 1 / b = (b + a) / (a*b) := by
+  match a, b with
+  | ⟨a1, a2⟩, ⟨b1, b2⟩ => {
+    simp [div_eq, add_eq]
+
+    have w1 : a1 ≠ 0 := ha
+    have w2 : b1 ≠ 0 := hb
+    have : a1*b1 ≠ 0 := by exact mul_ne_zero w1 w2
+
+    apply congr_arg₂
+    field_simp
+    field_simp
+    ring
+  }
+
+theorem diff_one_div (a b : DualNumber ℝ) (ha : a.fst ≠ 0) (hb : b.fst ≠ 0) : 1 / a - 1 / b = (b - a) / (a*b) := by
+  match a, b with
+  | ⟨a1, a2⟩, ⟨b1, b2⟩ => {
+    simp [div_eq, diff_eq]
+    have w1 : a1 ≠ 0 := ha
+    have w2 : b1 ≠ 0 := hb
+    have : a1*b1 ≠ 0 := by exact mul_ne_zero w1 w2
+
+    apply congr_arg₂
+    field_simp
+    field_simp
+    ring
+  }
 
 #check HMul
 instance {F : Type*} [Field F] : Field (DualNumber F) :=
@@ -164,9 +205,44 @@ example (x : ℝ) : (∑' (n : Nat), (((TrivSqZeroExt.inl x) + DualNumber.eps : 
     }
   -- TrivSqZeroExt.fst
 
-example : 1 / (1 - ((TrivSqZeroExt.inl x + DualNumber.eps))) - 1 / (1 - TrivSqZeroExt.inl x : DualNumber ℝ) = ((TrivSqZeroExt.inl x + DualNumber.eps) - TrivSqZeroExt.inl x) / ((1 - ((TrivSqZeroExt.inl x + DualNumber.eps))) * (1 - TrivSqZeroExt.inl x)) := by
+example : 1 / (1 - ((TrivSqZeroExt.inl x + DualNumber.eps))) - 1 / (1 - TrivSqZeroExt.inl x : DualNumber ℝ) = (DualNumber.eps) / ((1 - ((TrivSqZeroExt.inl x + DualNumber.eps))) * (1 - TrivSqZeroExt.inl x)) := by
 {
+  rw [diff_one_div]
+  ring
+  sorry
+  sorry
+}
 
+example :  (1 - ((TrivSqZeroExt.inl x + DualNumber.eps))) * (1 - TrivSqZeroExt.inl x : DualNumber ℝ) = 1 - 2*TrivSqZeroExt.inl x + DualNumber.eps * (TrivSqZeroExt.inl x - 1) + (TrivSqZeroExt.inl x)^2 := by {
+  ring
+}
+
+open DualNumber
+
+theorem fst_one_div_real (a : ℝ) : (1 / TrivSqZeroExt.inl a : DualNumber ℝ).1 = 1 / a := by {
+  rw [div_eq]
+  simp
+}
+
+theorem snd_one_div_real (a : ℝ) : (1 / TrivSqZeroExt.inl a : DualNumber ℝ).2 = 0 := by {
+  rw [div_eq]
+  simp
+}
+
+example (a b : ℝ) (ha : a ≠ 0) : ε / (TrivSqZeroExt.inl a + (TrivSqZeroExt.inl b)*DualNumber.eps : DualNumber ℝ) = ε * (1 / (TrivSqZeroExt.inl a)) := by
+{
+  rw [div_eq]
+  apply congr_arg₂
+
+  simp
+  apply Or.inl
+  rfl
+
+  simp [fst_one_div_real, snd_one_div_real]
+  field_simp
+  have : (ε :DualNumber ℝ).2 = 1 := by rfl
+  rw [this]
+  ring
 }
 
 #check TrivSqZeroExt.instTopologicalSpace
