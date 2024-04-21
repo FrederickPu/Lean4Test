@@ -280,7 +280,7 @@ example : ∃ (x : Quotient z12), x * x  = -(⟦11⟧ : ℤ₁₂) := by
 
 end q4
 
-section q5
+section q5q6
 
 def r (n : ℤ) (x y : ℤ) : Prop := n ∣ (x - y)
 
@@ -296,14 +296,16 @@ def F.mul_equiv_mul {n : ℤ} {a b c d : ℤ} : r n a c → r n b d → r n (a *
   rw [woo] at this
   exact this
 
-instance {n : ℤ} : Add (Quot (fun x y => n ∣ (x - y))) := {
+instance {n : ℤ} : Add (Quot (r n)) := {
   add := by {
     apply Quot.map₂ (· + ·)
     intro a b1 b2 h
+    simp [r]
     ring_nf
     exact h
 
     intro a1 a2 b h
+    simp [r]
     ring_nf
     exact h
   }
@@ -330,6 +332,7 @@ instance {n : ℤ} : Mul (Quot (r n))  := {
 theorem Int.gcd_eq_sum (x y : ℤ): ∃ (a : ℤ) (b : ℤ), a * x + b * y = Int.gcd x y := by sorry
 theorem Int.gcd_le_sum (x y a b : ℤ) : Int.gcd x y ≤ a * x + b * y := by sorry
 
+theorem mk_add {n : ℤ} (a b : ℤ) : Quot.mk (r n) a + Quot.mk (r n) b = Quot.mk (r n) (a + b) := by rfl
 theorem mk_mul {n : ℤ} (a b : ℤ) : Quot.mk (r n) a * Quot.mk (r n) b = Quot.mk (r n) (a * b) := by rfl
 -- x * x' - n * y = 1
 -- ax + bn = gcd(x, n)
@@ -390,4 +393,115 @@ example (n : ℤ) (x : ℤ) : Int.gcd n x = 1 ↔ ∃ x' : (Quot (r n)), (Quot.m
   }
 }
 
-end q5
+def Smallest {α : Type*} [LE α] (p : α → Prop) (a : α) := p a ∧ ∀ b, p b → a ≤ b
+
+instance {n : ℤ} : Zero (Quot (r n)) :=
+  ⟨Quot.mk _ 0⟩
+instance {n : ℤ} : One (Quot (r n)) :=
+  ⟨Quot.mk _ 1⟩
+
+theorem zero_eq : (0 : Quot (r n)) = Quot.mk _ 0 := by rfl
+
+instance {n : ℤ} : Ring (Quot (r n)) := {
+  add_assoc := by
+    intro a b c
+    match Quot.exists_rep a, Quot.exists_rep b, Quot.exists_rep c with
+    | ⟨a', ha⟩, ⟨b', hb⟩, ⟨c', hc⟩ => {
+      rw [← ha, ← hb, ← hc]
+      simp [mk_add]
+      ring
+    }
+  zero_add := by
+    intro a
+    simp [zero_eq]
+    match Quot.exists_rep a with
+    | ⟨a', ha⟩ =>
+      rw [← ha, mk_add]
+      ring
+  add_zero := by
+    intro a
+    simp [zero_eq]
+    match Quot.exists_rep a with
+    | ⟨a', ha⟩ =>
+      rw [← ha, mk_add]
+      ring
+  add_comm := by
+    intro a b
+    simp [zero_eq]
+    match Quot.exists_rep a, Quot.exists_rep b with
+    | ⟨a', ha⟩, ⟨b', hb⟩ =>
+      rw [← ha, ← hb, mk_add, mk_add]
+      ring
+  left_distrib := by
+    intro a b c
+    match Quot.exists_rep a, Quot.exists_rep b, Quot.exists_rep c with
+    | ⟨a', ha⟩, ⟨b', hb⟩, ⟨c', hc⟩ =>
+      simp [← ha, ← hb, ← hc, mk_add, mk_mul]
+      ring
+  right_distrib := by
+    intro a b c
+    match Quot.exists_rep a, Quot.exists_rep b, Quot.exists_rep c with
+    | ⟨a', ha⟩, ⟨b', hb⟩, ⟨c', hc⟩ =>
+      simp [← ha, ← hb, ← hc, mk_add, mk_mul]
+      ring
+  zero_mul := by sorry
+  mul_zero := by sorry
+  mul_assoc := by sorry
+  one_mul := by sorry
+  mul_one := by sorry
+  neg := by sorry
+  add_left_neg := by sorry
+}
+
+theorem nsmul_bruh {p : Nat} (n : Nat) : AddMonoid.nsmul n (Quot.mk (r p) 1) = Quot.mk (r p) n := by {
+  induction n with
+  | zero => {
+    rw [AddMonoid.nsmul_zero]
+    simp [zero_eq]
+  }
+  | succ n ih => {
+    rw [AddMonoid.nsmul_succ]
+    rw [ih, mk_add]
+    simp
+    ring
+  }
+}
+
+-- character of a ℤ[p]
+example {p : Nat} : Smallest (fun (n : Nat) => AddMonoid.nsmul n (Quot.mk (r p) 1) = (0 : Quot (r p))) p := by
+{
+  apply And.intro
+  simp only
+  rw [nsmul_bruh p, zero_eq]
+  rw [Quot.eq]
+  rw [Equivalence.eqvGen_eq]
+  simp [r]
+
+  -- cringe stuff
+  apply Equivalence.mk
+  · simp [r]
+  · intro x y h; exact dvd_sub_comm.mp h
+
+  intro x y z h1 h2
+  have : (p:ℤ) ∣ (x - y) + (y - z) :=
+    Int.dvd_add h1 h2
+  simp at this
+  exact this
+  -- cringe stuff
+
+  intro b h
+  apply by_contradiction
+  simp
+  intro h'
+  rw [nsmul_bruh, zero_eq, Quot.eq, Equivalence.eqvGen_eq] at h
+  simp [r] at h
+  have : p ∣ b := by exact Int.ofNat_dvd.mp h
+  match this with
+  | ⟨k, hk⟩ => {
+    have w : k > 0 := by sorry
+    have : p = b / k :=by exact (Nat.div_eq_of_eq_mul_left w hk).symm
+    have : b / k ≤ b := Nat.div_le_self b k
+    linarith
+  }
+}
+end q5q6
