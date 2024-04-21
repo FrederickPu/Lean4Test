@@ -257,10 +257,22 @@ def mk_add (a b : ℤ) : (⟦a⟧: Quotient z12) + ⟦b⟧ = ⟦a + b⟧ := by r
 -- a) has solution
 -- want ⟦5⟧ x = ⟦4⟧
 -- 5 * 8 = 40 ≈ 4
-example : ∃ (x : Quotient z12), (⟦5⟧ :  ℤ₁₂) * x + ⟦3⟧ = (⟦7⟧ : ℤ₁₂) := by
-  use ⟦8⟧
-  simp [mk_mul, mk_add]
-  simp [HasEquiv.Equiv, Setoid.r]
+example (x : ℤ₁₂) : (⟦5⟧ :  ℤ₁₂) * x + ⟦3⟧ = (⟦7⟧ : ℤ₁₂) ↔ x = (⟦8⟧ : ℤ₁₂):= by
+  apply Iff.intro
+  intro h
+  match x.exists_rep with
+  | ⟨x', hx⟩ => {
+    rw [← hx, mk_mul, mk_add, Quotient.eq] at h
+    simp [HasEquiv.Equiv, Setoid.r] at h
+    have : 5 * x' + 3 - 7 = 5 * (x' - 8) + 3 * 12 := by ring
+    rw [this] at h
+    rw [← hx, Quotient.eq]
+    simp [HasEquiv.Equiv, Setoid.r]
+    exact Int.dvd_of_dvd_mul_right_of_gcd_one ((Int.dvd_add_left ⟨3, by rfl⟩).mp h) (by rfl)
+  }
+  intro h
+  rw [h]
+  simp [mk_mul, mk_add, HasEquiv.Equiv, Setoid.r]
 
 -- b) has solution
 -- we want 12 ∣ (3x + 6) = 3(x + 2)
