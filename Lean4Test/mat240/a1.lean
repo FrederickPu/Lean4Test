@@ -614,94 +614,34 @@ theorem equiv_sub {p a b c : ℤ} (h : b ≡ c [ZMOD p] ) : b ≡ a [ZMOD p] ↔
 -- the helper lemmas weren't used but help to get a better understanding of the problem space
 -- would be necessary for larger moduluses tho
 example (x : ℤ) : x^2 ≡ -11 [ZMOD 12] ↔ x ≡ 1 [ZMOD 12] ∨ x ≡ 5 [ZMOD 12] ∨ x ≡ 7 [ZMOD 12] ∨ x ≡ 11 [ZMOD 12]:= by
-{
+  have temp {a : ℤ} (hx : x ≡ a [ZMOD 12]) : x^2 ≡ a^2 [ZMOD 12] :=
+    Int.ModEq.pow 2 hx
   mod_cases x % 12
-  · have : x^2 ≡ 0^2 [ZMOD 12] := by exact Int.ModEq.pow 2 H
-    have : x ^ 2 ≡ -11 [ZMOD 12]  ↔ 0^2 ≡ -11 [ZMOD 12] := by
-      apply Iff.intro
-      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
-      exact fun a => Int.ModEq.trans this a
-    rw [this]
-    simp only [equiv_sub H] -- false
-  · have := by exact Int.ModEq.pow 2 H
-    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 1^2 ≡ -11 [ZMOD 12] := by
-      apply Iff.intro
-      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
-      exact fun a => Int.ModEq.trans this a
-    rw [this]
-    simp only [equiv_sub H] -- true
-  · have := by exact Int.ModEq.pow 2 H
-    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 2^2 ≡ -11 [ZMOD 12] := by
-      apply Iff.intro
-      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
-      exact fun a => Int.ModEq.trans this a
-    rw [this]
-    simp only [equiv_sub H, or_self]
-  · have := by exact Int.ModEq.pow 2 H
-    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 3^2 ≡ -11 [ZMOD 12] := by
-      apply Iff.intro
-      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
-      exact fun a => Int.ModEq.trans this a
-    rw [this]
-    simp only [equiv_sub H] -- false
-  · have := by exact Int.ModEq.pow 2 H
-    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 4^2 ≡ -11 [ZMOD 12] := by
-      apply Iff.intro
-      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
-      exact fun a => Int.ModEq.trans this a
-    rw [this]
-    simp only [equiv_sub H] -- false
-  · have := by exact Int.ModEq.pow 2 H
-    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 5^2 ≡ -11 [ZMOD 12] := by
-      apply Iff.intro
-      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
-      exact fun a => Int.ModEq.trans this a
-    rw [this]
-    simp only [equiv_sub H] -- true
-  · have := by exact Int.ModEq.pow 2 H
-    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 6^2 ≡ -11 [ZMOD 12] := by
-      apply Iff.intro
-      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
-      exact fun a => Int.ModEq.trans this a
-    rw [this]
-    simp only [equiv_sub H] -- false
-  · have := by exact Int.ModEq.pow 2 H
-    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 7^2 ≡ -11 [ZMOD 12] := by
-      apply Iff.intro
-      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
-      exact fun a => Int.ModEq.trans this a
-    rw [this]
-    simp only [equiv_sub H] -- true
-  · have := by exact Int.ModEq.pow 2 H
-    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 8^2 ≡ -11 [ZMOD 12] := by
-      apply Iff.intro
-      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
-      exact fun a => Int.ModEq.trans this a
-    rw [this]
+  all_goals
+  · rw [equiv_sub <| temp H]
     simp only [equiv_sub H]
-  · have := by exact Int.ModEq.pow 2 H
-    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 9^2 ≡ -11 [ZMOD 12] := by
-      apply Iff.intro
-      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
-      exact fun a => Int.ModEq.trans this a
-    rw [this]
-    simp [equiv_sub H]
-  · have := by exact Int.ModEq.pow 2 H
-    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 10^2 ≡ -11 [ZMOD 12] := by
-      apply Iff.intro
-      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
-      exact fun a => Int.ModEq.trans this a
-    rw [this]
-    simp [equiv_sub H] -- false
-  · have := by exact Int.ModEq.pow 2 H
-    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 11^2 ≡ -11 [ZMOD 12] := by
-      apply Iff.intro
-      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
-      exact fun a => Int.ModEq.trans this a
-    rw [this]
-    simp
-    simp only [equiv_sub H] -- true
-}
+
+-- q4 a) with similar case bash optimization
+example (x : ℤ) : 5 * x + 3 ≡ 7 [ZMOD 12] ↔ x ≡ 8 [ZMOD 12] := by
+  have temp {a : ℤ} (hx : x ≡ a [ZMOD 12]) : 5 * x + 3 ≡ 5 * a + 3 [ZMOD 12] := by
+    have : 5 * x ≡ 5 * a [ZMOD 12] :=
+      Int.ModEq.mul rfl hx
+    exact Int.ModEq.add this rfl
+  mod_cases x % 12
+  · all_goals
+    simp only [equiv_sub <| temp H, equiv_sub H]
+
+-- q4 b) with similar case bash optimization
+example (x : ℤ) : 3 * x + 11 ≡ 5 [ZMOD 12] ↔ x ≡ 2 [ZMOD 12]  ∨ x ≡ 6 [ZMOD 12] ∨ x ≡ 10 [ZMOD 12] := by
+  have temp {a : ℤ} (hx : x ≡ a [ZMOD 12]) : 3*x + 11 ≡ 3*a + 11 [ZMOD 12] := by
+    have : 3 * x ≡ 3 * a [ZMOD 12] :=
+      Int.ModEq.mul rfl hx
+    exact Int.ModEq.add this rfl
+  mod_cases x % 12
+  all_goals
+  · rw [equiv_sub <| temp H]
+    simp only [equiv_sub H]
+
 end q4
 
 section q5q6
