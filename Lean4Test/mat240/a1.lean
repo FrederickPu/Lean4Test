@@ -486,7 +486,7 @@ open Complex
 def conj (x : Complex):= (starRingEnd _) x
 
 -- a)
-example  (z : Complex) : (1 - 2 * I) * conj z = - I * (1 - I) ↔ z = ⟨(normSq (1 - I * 2))⁻¹, (normSq (1 - I * 2))⁻¹ * 3⟩   := by {
+example  (z : Complex) : (1 - 2 * I) * conj z = - I * (1 - I) ↔ z = ⟨(normSq (1 - I * 2))⁻¹, (normSq (1 - I * 2))⁻¹ * 3⟩ := by
   apply Iff.intro
   intro h
   have : (1 - 2 * I) ≠ 0 := by simp [Complex.ext_iff]
@@ -513,6 +513,5 @@ example  (z : Complex) : (1 - 2 * I) * conj z = - I * (1 - I) ↔ z = ⟨(normSq
   simp [Complex.add_im, Complex.mul_im, Complex.mul_re, conj, Complex.conj_re, Complex.mul_re]
   simp [normSq]
   norm_num
-}
 
 end q7
