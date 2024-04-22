@@ -608,6 +608,100 @@ example (x : ℤ) : 4 ∣ (x + 1) ∧ 3 ∣ (x - 1) ↔ x ≡ 7 [ZMOD 12]  := by
   norm_num [show gcd (4:ℤ) 3 = 1 by rfl] at h
   exact h
 
+theorem equiv_sub {p a b c : ℤ} (h : b ≡ c [ZMOD p] ) : b ≡ a [ZMOD p] ↔ c ≡ a [ZMOD p] := by sorry
+
+-- proof for 4 c): done using case bash with 12 cases
+-- the helper lemmas weren't used but help to get a better understanding of the problem space
+-- would be necessary for larger moduluses tho
+example (x : ℤ) : x^2 ≡ -11 [ZMOD 12] ↔ x ≡ 1 [ZMOD 12] ∨ x ≡ 5 [ZMOD 12] ∨ x ≡ 7 [ZMOD 12] ∨ x ≡ 11 [ZMOD 12]:= by
+{
+  mod_cases x % 12
+  · have : x^2 ≡ 0^2 [ZMOD 12] := by exact Int.ModEq.pow 2 H
+    have : x ^ 2 ≡ -11 [ZMOD 12]  ↔ 0^2 ≡ -11 [ZMOD 12] := by
+      apply Iff.intro
+      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
+      exact fun a => Int.ModEq.trans this a
+    rw [this]
+    simp only [equiv_sub H] -- false
+  · have := by exact Int.ModEq.pow 2 H
+    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 1^2 ≡ -11 [ZMOD 12] := by
+      apply Iff.intro
+      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
+      exact fun a => Int.ModEq.trans this a
+    rw [this]
+    simp only [equiv_sub H] -- true
+  · have := by exact Int.ModEq.pow 2 H
+    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 2^2 ≡ -11 [ZMOD 12] := by
+      apply Iff.intro
+      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
+      exact fun a => Int.ModEq.trans this a
+    rw [this]
+    simp only [equiv_sub H, or_self]
+  · have := by exact Int.ModEq.pow 2 H
+    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 3^2 ≡ -11 [ZMOD 12] := by
+      apply Iff.intro
+      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
+      exact fun a => Int.ModEq.trans this a
+    rw [this]
+    simp only [equiv_sub H] -- false
+  · have := by exact Int.ModEq.pow 2 H
+    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 4^2 ≡ -11 [ZMOD 12] := by
+      apply Iff.intro
+      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
+      exact fun a => Int.ModEq.trans this a
+    rw [this]
+    simp only [equiv_sub H] -- false
+  · have := by exact Int.ModEq.pow 2 H
+    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 5^2 ≡ -11 [ZMOD 12] := by
+      apply Iff.intro
+      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
+      exact fun a => Int.ModEq.trans this a
+    rw [this]
+    simp only [equiv_sub H] -- true
+  · have := by exact Int.ModEq.pow 2 H
+    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 6^2 ≡ -11 [ZMOD 12] := by
+      apply Iff.intro
+      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
+      exact fun a => Int.ModEq.trans this a
+    rw [this]
+    simp only [equiv_sub H] -- false
+  · have := by exact Int.ModEq.pow 2 H
+    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 7^2 ≡ -11 [ZMOD 12] := by
+      apply Iff.intro
+      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
+      exact fun a => Int.ModEq.trans this a
+    rw [this]
+    simp only [equiv_sub H] -- true
+  · have := by exact Int.ModEq.pow 2 H
+    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 8^2 ≡ -11 [ZMOD 12] := by
+      apply Iff.intro
+      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
+      exact fun a => Int.ModEq.trans this a
+    rw [this]
+    simp only [equiv_sub H]
+  · have := by exact Int.ModEq.pow 2 H
+    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 9^2 ≡ -11 [ZMOD 12] := by
+      apply Iff.intro
+      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
+      exact fun a => Int.ModEq.trans this a
+    rw [this]
+    simp [equiv_sub H]
+  · have := by exact Int.ModEq.pow 2 H
+    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 10^2 ≡ -11 [ZMOD 12] := by
+      apply Iff.intro
+      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
+      exact fun a => Int.ModEq.trans this a
+    rw [this]
+    simp [equiv_sub H] -- false
+  · have := by exact Int.ModEq.pow 2 H
+    have : x ^ 2 ≡ -11 [ZMOD 12] ↔ 11^2 ≡ -11 [ZMOD 12] := by
+      apply Iff.intro
+      exact fun a => Int.ModEq.trans (id (Int.ModEq.symm this)) a
+      exact fun a => Int.ModEq.trans this a
+    rw [this]
+    simp
+    simp only [equiv_sub H] -- true
+}
 end q4
 
 section q5q6
@@ -919,7 +1013,5 @@ example  (z : Complex) : (1 - 2 * I) * conj z = - I * (1 - I) ↔ z = ⟨(normSq
   simp [normSq]
   norm_num
 }
-
-
 
 end q7
