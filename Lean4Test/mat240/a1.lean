@@ -679,7 +679,7 @@ def primeinstNoZeroDivisors {p : Nat} [NeZero p] (hp2 : Nat.Prime p) : NoZeroDiv
 
 -- Polynomial.coeff
 #check Polynomial.degree_lt_iff_coeff_zero
-example (p : Polynomial (Fin 5)) : p.degree = 1 ↔ ∃ a b, a ≠ 0 ∧ p = (Polynomial.C a)  * Polynomial.X + (Polynomial.C b) := by {
+theorem Polynomial.degree_eq_one_iff (p : Polynomial (Fin 5)) : p.degree = 1 ↔ ∃ a b, a ≠ 0 ∧ p = (Polynomial.C a)  * Polynomial.X + (Polynomial.C b) := by {
   apply Iff.intro
   intro h
   have : Polynomial.degree p < (2: ℕ) := by
@@ -728,4 +728,91 @@ example (p : Polynomial (Fin 5)) : p.degree = 1 ↔ ∃ a b, a ≠ 0 ∧ p = (Po
     rw [Polynomial.degree_C_mul ha, Polynomial.degree_X]
     simp only
 }
+
+theorem Polynomial.irreducible_iff_degree_lt{R : Type u} [Field R] (p : Polynomial R) (hp0 : p ≠ 0) (hpu : ¬IsUnit p) :
+Irreducible p ↔ ∀ (q : Polynomial R), Polynomial.degree q ≤ (Polynomial.natDegree p / 2 : ℕ) → q ∣ p → IsUnit q := sorry
+
+
+instance : Field (Fin 5) := {
+  inv :=
+  fun x => match x with
+  | ⟨0, _⟩ => 0
+  | ⟨1, _⟩ => 1
+  | ⟨2, _⟩ => 3
+  | ⟨3, _⟩ => 2
+  | ⟨4, _⟩ => 4
+  | ⟨x + 5, isLt⟩ => by linarith
+  mul_inv_cancel := by simp only
+  inv_zero := by simp only
+  div_eq_mul_inv := by sorry
+}
+
+theorem Polynomial.not_isUnit_of_degree_pos{R : Type u} [Semiring R] [NoZeroDivisors R] (p : Polynomial R) (hpl : 0 < Polynomial.degree p) :
+¬IsUnit p := sorry
+
+-- note: Units in polynomial rings are the constant polynomials
+-- so x^2 + 1 and 3 x^2 + 3 are both considered irreducible even though 3 x^2 + 3 has a common factor 3
+theorem Polynomial.eq_degree1_mul_degree1_of_reducible_degree2 (p : Polynomial (Fin 5)) (hp : Polynomial.degree p = 2) (hp2 : ¬ Irreducible p) : ∃ p1 p2, p1.degree = 1 ∧ p2.degree = 1 ∧ p = p1 * p2 := by {
+  have hp0 : p ≠ 0 := by
+    intro h
+    simp [h] at hp
+  have hpu : ¬ IsUnit p := by
+    apply Polynomial.not_isUnit_of_degree_pos
+    simp [hp]
+  rw [Polynomial.irreducible_iff_degree_lt _ hp0 hpu] at hp2
+  simp at hp2
+  match hp2 with
+  | ⟨p1, ⟨p2, hp12⟩, hp1', H⟩ => {
+    have crux : Polynomial.natDegree p = 2 :=
+      Polynomial.natDegree_eq_of_degree_eq_some hp
+    simp [crux] at hp1'
+    suffices Polynomial.degree p1 = 1 by
+      have w : Polynomial.degree (p1 * p2) = Polynomial.degree p1 + Polynomial.degree p2 :=
+        Polynomial.degree_mul
+      rw [← hp12] at w
+      rw [w, this] at hp
+      have : (1 : ℕ) + p2.degree = (1 + 1 : ℕ) := hp
+      simp at this
+      have := WithBot.add_left_cancel (by simp only) this
+      use p1
+      use p2
+    match h : p1.degree with
+    | none => {
+      rw [show none = (⊥ : WithBot ℕ) from rfl] at h
+      rw [Polynomial.degree_eq_bot] at h
+      simp [h] at hp12
+      simp [hp12] at hp
+    }
+    | some 0 =>
+      apply Polynomial.eq_C_of_degree_eq_zero at h
+      rw [Polynomial.isUnit_iff] at H
+      apply False.elim ∘ H
+      use Polynomial.coeff p1 0
+      simp only [h.symm, and_true]
+      suffices p1.coeff 0 ≠ 0 by {
+        use ⟨p1.coeff 0, (p1.coeff 0)⁻¹, by {
+          rw [mul_inv_cancel]
+          intro h
+          simp [h] at this
+        }, by {
+          rw [inv_mul_cancel]
+          intro h
+          simp [h] at this
+        }⟩
+      }
+      intro h'
+      rw [h'] at h
+      simp [h] at hp12
+      simp [hp12] at hp
+
+    | some 1 => rfl
+    | some (x + 2) =>
+      rw [h] at hp1'
+      have : (1 :WithBot ℕ) = (some 1 : WithBot ℕ) := by rfl
+      rw [this] at hp1'
+      have : Nat.succ (Nat.succ x) ≤ 1 := by exact WithBot.coe_le_one.mp hp1'
+      linarith
+  }
+}
+
 end q8
