@@ -267,7 +267,7 @@ def F.mul_equiv_mul {n : ℤ} {a b c d : ℤ} : r n a c → r n b d → r n (a *
   rw [woo] at this
   exact this
 
-instance {n : ℤ} : Add (Quot (r n)) := {
+instance instQrAdd {n : ℤ} : Add (Quot (r n)) := {
   add := by {
     apply Quot.map₂ (· + ·)
     intro a b1 b2 h
@@ -282,7 +282,7 @@ instance {n : ℤ} : Add (Quot (r n)) := {
   }
 }
 
-instance {n : ℤ} : Mul (Quot (r n))  := {
+instance instQrMul {n : ℤ} : Mul (Quot (r n))  := {
   mul := by {
     apply Quot.map₂ (· * ·)
     intro a b1 b2 h
@@ -310,52 +310,14 @@ theorem mk_mul {n : ℤ} (a b : ℤ) : Quot.mk (r n) a * Quot.mk (r n) b = Quot.
 -- (x' - a)x + (b + y)n
 #check Int.instDvdInt
 
--- q5 a) proof
--- proved condition for multiplicative inverses
-example (n : ℤ) (x : ℤ) : Int.gcd n x = 1 ↔ ∃ x' : (Quot (r n)), (Quot.mk _ x : Quot (r n)) * x' = Quot.mk _ 1 := by
-  apply Iff.intro
-  intro h
-  match Int.gcd_eq_sum n x with
-  | ⟨a, b, hab⟩ =>
-    simp [h] at hab
-    use Quot.mk _ b
-    rw [mk_mul, Quot.eq]
-    exact EqvGen.rel (x * b) 1 <|
-      Dvd.intro_left (-a) (by linarith)
 
-  intro ⟨x', hx'⟩
-  match x'.exists_rep with
-  | ⟨x'', hx''⟩ =>
-    rw [← hx'', mk_mul, Quot.eq, Equivalence.eqvGen_eq lmao, r] at hx'
-
-    match hx' with
-    | ⟨k, hk⟩ =>
-      have w := Int.gcd_le_sum n x (-k) x''
-      rw [show (-k) * n + x'' * x = 1 by linarith] at w
-      simp at w
-      cases em (x = 0) with
-      | inl l =>
-        simp [l] at hx'
-        simp [l]
-        have : Int.natAbs n ∣ Int.natAbs (1 : ℤ) :=
-          Int.natAbs_dvd_natAbs.mpr hx'
-        simp only [Int.natAbs_one, Nat.isUnit_iff, Nat.dvd_one] at this
-        exact this
-      | inr r =>
-        have : 0 < Int.gcd n x  := by
-          rw [Int.gcd_pos_iff]
-          exact Or.inr r
-        have : Int.gcd n x ≥ 1 := by linarith
-        exact le_antisymm w this
-
-def Smallest {α : Type*} [LE α] (p : α → Prop) (a : α) := p a ∧ ∀ b, p b → a ≤ b
-
-instance {n : ℤ} : Zero (Quot (r n)) :=
+instance instQrZero {n : ℤ} : Zero (Quot (r n)) :=
   ⟨Quot.mk _ 0⟩
-instance {n : ℤ} : One (Quot (r n)) :=
+instance instQrOne {n : ℤ} : One (Quot (r n)) :=
   ⟨Quot.mk _ 1⟩
 
 theorem zero_eq : (0 : Quot (r n)) = Quot.mk _ 0 := by rfl
+theorem one_eq {n : ℤ} : (1 : Quot (r n)) = Quot.mk _ 1 := by rfl
 
 instance {n : ℤ} : Ring (Quot (r n)) := {
   add_assoc := by
@@ -408,6 +370,152 @@ instance {n : ℤ} : Ring (Quot (r n)) := {
   add_left_neg := by sorry
 }
 
+-- q5 a) proof
+-- proved condition for multiplicative inverses
+theorem q5_a (n : ℤ) (x : ℤ) : Int.gcd n x = 1 ↔ ∃ x' : (Quot (r n)), (Quot.mk _ x : Quot (r n)) * x' = Quot.mk _ 1 := by
+  apply Iff.intro
+  intro h
+  match Int.gcd_eq_sum n x with
+  | ⟨a, b, hab⟩ =>
+    simp [h] at hab
+    use Quot.mk _ b
+    rw [mk_mul, Quot.eq]
+    exact EqvGen.rel (x * b) 1 <|
+      Dvd.intro_left (-a) (by linarith)
+
+  intro ⟨x', hx'⟩
+  match x'.exists_rep with
+  | ⟨x'', hx''⟩ =>
+    rw [← hx'', mk_mul, Quot.eq, Equivalence.eqvGen_eq lmao, r] at hx'
+
+    match hx' with
+    | ⟨k, hk⟩ =>
+      have w := Int.gcd_le_sum n x (-k) x''
+      rw [show (-k) * n + x'' * x = 1 by linarith] at w
+      simp at w
+      cases em (x = 0) with
+      | inl l =>
+        simp [l] at hx'
+        simp [l]
+        have : Int.natAbs n ∣ Int.natAbs (1 : ℤ) :=
+          Int.natAbs_dvd_natAbs.mpr hx'
+        simp only [Int.natAbs_one, Nat.isUnit_iff, Nat.dvd_one] at this
+        exact this
+      | inr r =>
+        have : 0 < Int.gcd n x  := by
+          rw [Int.gcd_pos_iff]
+          exact Or.inr r
+        have : Int.gcd n x ≥ 1 := by linarith
+        exact le_antisymm w this
+
+def Smallest {α : Type*} [LE α] (p : α → Prop) (a : α) := p a ∧ ∀ b, p b → a ≤ b
+
+-- a * x + b * y = 1
+-- Q5 b) a ℤ_p is a field iff p is prime
+
+example (p k : Nat) : (p:ℤ) ∣ k ↔ p ∣ k := by exact Int.ofNat_dvd
+theorem q5_b_mp {p : Nat} (hp : p > 1) : (∃ inst : (Field (Quot (r p))), inst.mul = instQrMul.mul ∧ inst.one = instQrOne.one ∧ inst.zero = instQrZero.zero) → Prime p := by {
+    -- hCM : inst has canonical multiplication on Z_p
+    -- hCO : inst has canonical multiplicative identity on Z_p
+    intro ⟨inst, hCM, hCO, hCZ⟩
+    have := inst.mul_inv_cancel
+    rw [← Nat.irreducible_iff_prime]
+    apply Irreducible.mk
+    · rw [Nat.isUnit_iff]
+      linarith
+
+    intro a b H
+    cases em (Quot.mk (r p) a = inst.zero) with
+    | inl l => {
+      -- the Zero for `inst` is the same as the zero used in `q5_a`
+      simp [OfNat.ofNat, hCZ] at l
+      rw [show instQrZero.zero = Quot.mk _ 0 by rfl] at l
+      rw [Quot.eq, Equivalence.eqvGen_eq lmao, r] at l
+      ring_nf at l
+      rw [Int.ofNat_dvd] at l
+      match l with
+      | ⟨k, hk⟩ => { -- show that a = p
+        have hab : a * b > 0 := by linarith
+        have : a > 0 := by
+          rw [mul_comm] at hab
+          exact lt_of_nsmul_lt_nsmul b hab
+        rw [hk] at this
+
+        have : k > 0 :=
+          lt_of_nsmul_lt_nsmul p this
+        have : p ≤ p * k :=
+          Nat.le_mul_of_pos_right this
+        have : p > 0 := by linarith
+        rw [H] at this
+
+        have : b > 0 :=
+          lt_of_nsmul_lt_nsmul a this
+        have : a ≤ a * b :=
+          Nat.le_mul_of_pos_right this
+
+        simp [show a = p  by linarith] at H
+        have := Eq.symm H
+        rw [Nat.mul_right_eq_self_iff (by linarith)] at this
+        exact Or.inr -- b = 1
+          <| Nat.isUnit_iff.mpr this
+    }
+    }
+    | inr r => { -- show that a = 1
+      specialize this _ r
+      have : Int.gcd ↑p ↑a = 1 := by
+        rw [q5_a p a]
+        use (Quot.mk _ a)⁻¹
+        simp only [HMul.hMul, ← hCM]
+        rw [← one_eq]
+        simp [OfNat.ofNat, ← hCO]
+        exact this
+      have : Nat.gcd a p = 1 := Nat.coprime_comm.mpr this
+      rw [← Nat.coprime_iff_gcd_eq_one] at this
+      apply Or.inl -- a = 1
+      rw [Nat.isUnit_iff]
+      exact Nat.Coprime.eq_one_of_dvd this ⟨b, H⟩
+    }
+}
+
+theorem q_5_b_mpr {p : Nat} (hp : p > 1) : Prime p → (∃ inst : (Field (Quot (r p))), inst.mul = instQrMul.mul ∧ inst.one = instQrOne.one ∧ inst.zero = instQrZero.zero) := by
+  intro H
+  have : ∀ x, ∃ x' : (Quot (r p)), (Quot.mk _ x : Quot (r p)) * x' = Quot.mk _ 1 := by sorry
+  rw [Classical.skolem] at this
+  have w : ∀ x : Quot (r p), ∃ x', (Quot.mk _ x') = x := by sorry
+  rw [Classical.skolem] at w
+  match this, w with
+  | ⟨f, hf⟩, ⟨g, hg⟩ =>
+    -- the conacaleness proofs are proved by rfl cause the type class system already inherits the predefined notions of one, zero etc.
+    use {
+      mul_comm := by
+        intro a b
+        match a.exists_rep, b.exists_rep with
+        | ⟨a', ha'⟩, ⟨b', hb'⟩ =>
+          rw [← ha', ← hb']
+          simp [mk_mul]
+          ring
+      inv := f ∘ g
+      exists_pair_ne := by {
+        use Quot.mk _ 0
+        use Quot.mk _ 1
+        simp [Quot.eq, Equivalence.eqvGen_eq lmao, r]
+        sorry
+      }
+      mul_inv_cancel := by {
+        intro a ha
+        specialize hg a
+        specialize hf (g a)
+        rw [hg] at hf
+        simp [Inv.inv]
+        exact hf
+      }
+      inv_zero := by {
+        simp [Inv.inv]
+        specialize hg 0
+        sorry -- we'll have to fix f to make this work
+      }
+    }
+
 theorem nsmul_bruh {p : Nat} (n : Nat) : AddMonoid.nsmul n (Quot.mk (r p) 1) = Quot.mk (r p) n := by
   induction n with
   | zero =>
@@ -421,7 +529,7 @@ theorem nsmul_bruh {p : Nat} (n : Nat) : AddMonoid.nsmul n (Quot.mk (r p) 1) = Q
 
 -- Q6 a) character of a ℤ[p]
 -- Note would be better to use `charP` to make it more inline with mathlib4
-example {p : Nat} (hp : p > 0): Smallest (fun (n : Nat) => AddMonoid.nsmul n (Quot.mk (r p) 1) = (0 : Quot (r p)) ∧ n > 0) p := by
+example {p : Nat} (hp : p > 0) : Smallest (fun (n : Nat) => AddMonoid.nsmul n (Quot.mk (r p) 1) = (0 : Quot (r p)) ∧ n > 0) p := by
   apply And.intro
   · simp only
     rw [nsmul_bruh p, zero_eq, Quot.eq, Equivalence.eqvGen_eq lmao]
