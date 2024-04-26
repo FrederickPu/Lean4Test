@@ -652,3 +652,80 @@ example  (z : Complex) : (1 - 2 * I) * conj z = - I * (1 - I) ↔ z = ⟨(normSq
   norm_num
 
 end q7
+
+section q8
+
+#check Fin.instCommRing
+
+theorem Fin.natCast_eq_zero{a : ℕ} {n : ℕ} [NeZero n] :
+  (a:Fin n) = 0 ↔ n ∣ a := by sorry
+
+def primeinstNoZeroDivisors {p : Nat} [NeZero p] (hp2 : Nat.Prime p) : NoZeroDivisors (Fin p) := ⟨
+  by
+  intro ⟨a, ha⟩ ⟨b, hb⟩ hab
+  have : { val := a, isLt := ha } = (a : Fin p) := by
+    apply Fin.eq_of_veq
+    exact (Nat.mod_eq_of_lt ha).symm
+  rw [this] at hab
+  rw [this]
+  have : { val := b, isLt := hb } = (b : Fin p) := by
+    apply Fin.eq_of_veq
+    exact (Nat.mod_eq_of_lt hb).symm
+  rw [this] at hab
+  rw [this, Fin.natCast_eq_zero, Fin.natCast_eq_zero]
+  rw [← Nat.cast_mul, Fin.natCast_eq_zero] at hab
+  exact (Nat.Prime.dvd_mul hp2).mp hab
+⟩
+
+-- Polynomial.coeff
+#check Polynomial.degree_lt_iff_coeff_zero
+example (p : Polynomial (Fin 5)) : p.degree = 1 ↔ ∃ a b, a ≠ 0 ∧ p = (Polynomial.C a)  * Polynomial.X + (Polynomial.C b) := by {
+  apply Iff.intro
+  intro h
+  have : Polynomial.degree p < (2: ℕ) := by
+    rw [h]
+    simp only
+  rw [Polynomial.degree_lt_iff_coeff_zero] at this
+  use Polynomial.coeff p 1
+  use Polynomial.coeff p 0
+  apply And.intro
+  · intro h'
+    have : p = Polynomial.C (Polynomial.coeff p 0) := by
+      rw [← Polynomial.coeff_inj]
+      ext m
+      match m with
+      | 0 => simp
+      | 1 => simp [h']
+      | Nat.succ (Nat.succ m) =>
+        specialize this m.succ.succ (by linarith)
+        simp [this]
+    rw [this, Polynomial.degree_C] at h
+    simp at h
+
+    intro H
+    · rw [H] at h
+      simp at h
+  · rw [← Polynomial.coeff_inj]
+    ext m
+    match m with
+    | 0 => simp only [Polynomial.coeff_add, Polynomial.mul_coeff_zero, Polynomial.coeff_C_zero,
+        Polynomial.coeff_X_zero, mul_zero, zero_add]
+    | 1 => simp only [Polynomial.coeff_add, Polynomial.coeff_mul_X, Polynomial.coeff_C_zero,
+      Polynomial.coeff_C_succ, add_zero]
+    | Nat.succ (Nat.succ m) => {
+      specialize this m.succ.succ (by {
+        linarith
+      })
+      simp [this]
+    }
+
+  · intro ⟨a, b, ha, H⟩
+    rw [H]
+
+    have := primeinstNoZeroDivisors <| (Nat.prime_iff_card_units 5).mpr rfl
+
+    rw [Polynomial.degree_add_C, Polynomial.degree_C_mul ha, Polynomial.degree_X]
+    rw [Polynomial.degree_C_mul ha, Polynomial.degree_X]
+    simp only
+}
+end q8
