@@ -411,9 +411,9 @@ theorem q5_a (n : ℤ) (x : ℤ) : Int.gcd n x = 1 ↔ ∃ x' : (Quot (r n)), (Q
 def Smallest {α : Type*} [LE α] (p : α → Prop) (a : α) := p a ∧ ∀ b, p b → a ≤ b
 
 -- a * x + b * y = 1
--- Q5 b) a ℤ_p is a field iff p is prime
 
-example (p k : Nat) : (p:ℤ) ∣ k ↔ p ∣ k := by exact Int.ofNat_dvd
+-- Any field formed on Z_p with canonical multiplication, zero and one must be of prime order
+-- note that we only need the fact that mul is canonical since it restricts the possibilities for add.
 theorem q5_b_mp {p : Nat} (hp : p > 1) : (∃ inst : (Field (Quot (r p))), inst.mul = instQrMul.mul ∧ inst.one = instQrOne.one ∧ inst.zero = instQrZero.zero) → Prime p := by {
     -- hCM : inst has canonical multiplication on Z_p
     -- hCO : inst has canonical multiplicative identity on Z_p
@@ -477,11 +477,23 @@ theorem q5_b_mp {p : Nat} (hp : p > 1) : (∃ inst : (Field (Quot (r p))), inst.
     }
 }
 
+-- for any prime number p, Z_p with canonical add, mul, zero, one can be made into a field with the right choice of ⁻¹
 theorem q_5_b_mpr {p : Nat} (hp : p > 1) : Prime p → (∃ inst : (Field (Quot (r p))), inst.mul = instQrMul.mul ∧ inst.one = instQrOne.one ∧ inst.zero = instQrZero.zero) := by
   intro H
-  have : ∀ x, ∃ x' : (Quot (r p)), (Quot.mk _ x : Quot (r p)) * x' = Quot.mk _ 1 := by sorry
+  have : ∀ x, ∃ x' : (Quot (r p)), ¬ p ∣ x.natAbs → (Quot.mk _ x : Quot (r p)) * x' = Quot.mk _ 1 := by
+    intro x
+    cases em (p ∣ x.natAbs) with
+    | inl l =>
+      simp only [l, IsEmpty.forall_iff, exists_const]
+    | inr r =>
+      simp [r]
+      rw [← q5_a, show Int.gcd p x = Nat.gcd p (x.natAbs) by rfl,
+      ← Nat.Coprime, Nat.Prime.coprime_iff_not_dvd (Nat.prime_iff.mpr H)]
+      exact r
   rw [Classical.skolem] at this
-  have w : ∀ x : Quot (r p), ∃ x', (Quot.mk _ x') = x := by sorry
+  have w : ∀ x : Quot (r p), ∃ x', (Quot.mk _ x') = x := by
+    intro x
+    exact Quot.exists_rep x
   rw [Classical.skolem] at w
   match this, w with
   | ⟨f, hf⟩, ⟨g, hg⟩ =>
@@ -494,27 +506,44 @@ theorem q_5_b_mpr {p : Nat} (hp : p > 1) : Prime p → (∃ inst : (Field (Quot 
           rw [← ha', ← hb']
           simp [mk_mul]
           ring
-      inv := f ∘ g
-      exists_pair_ne := by {
+      inv := fun x => if p ∣ (g x).natAbs then 0 else (f ∘ g) x
+      exists_pair_ne := by
         use Quot.mk _ 0
         use Quot.mk _ 1
-        simp [Quot.eq, Equivalence.eqvGen_eq lmao, r]
-        sorry
-      }
-      mul_inv_cancel := by {
+        simp [Quot.eq, Equivalence.eqvGen_eq lmao, r, Int.ofNat_dvd_left]
+        linarith
+      mul_inv_cancel := by
         intro a ha
         specialize hg a
         specialize hf (g a)
         rw [hg] at hf
         simp [Inv.inv]
-        exact hf
-      }
+        have : Quot.mk (r p) (g a) ≠ Quot.mk _ 0 := by
+          rw [← hg, zero_eq] at ha
+          exact ha
+        simp [Quot.eq] at this
+        rw [Equivalence.eqvGen_eq lmao, r, Int.ofNat_dvd_left] at this
+        simp at this
+        rw [if_neg this]
+        exact hf this
       inv_zero := by {
-        simp [Inv.inv]
+        simp only [Inv.inv, Nat.isUnit_iff, Function.comp_apply, ite_eq_left_iff, OfNat.ofNat, Zero.zero]
+        simp only [Int.ofNat_eq_coe, CharP.cast_eq_zero, Nat.isUnit_iff]
+
+        intro h
         specialize hg 0
-        sorry -- we'll have to fix f to make this work
+        rw [zero_eq] at hg
+        simp [Quot.eq] at hg
+        rw [Equivalence.eqvGen_eq lmao, r] at hg
+        simp [Int.ofNat_dvd_left] at hg
+        apply False.elim
+        exact h hg
       }
     }
+
+-- Q5 b) a ℤ_p is a field with canonical mul, one, zero iff p is prime
+theorem q5_b_full {p : Nat} (hp : p > 1) : (∃ inst : (Field (Quot (r p))), inst.mul = instQrMul.mul ∧ inst.one = instQrOne.one ∧ inst.zero = instQrZero.zero) ↔ Prime p :=
+  Iff.intro (fun a => q5_b_mp hp a) (fun a => q_5_b_mpr hp a)
 
 theorem nsmul_bruh {p : Nat} (n : Nat) : AddMonoid.nsmul n (Quot.mk (r p) 1) = Quot.mk (r p) n := by
   induction n with
