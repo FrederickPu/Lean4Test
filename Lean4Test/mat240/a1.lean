@@ -1,6 +1,7 @@
 import Mathlib.Algebra.Field.Defs
 import Mathlib.NumberTheory.Zsqrtd.GaussianInt
 import Mathlib.Tactic
+import Mathlib.Algebra.Polynomial.Basic
 
 /-
 A1 of MAT240
@@ -679,7 +680,7 @@ def primeinstNoZeroDivisors {p : Nat} [NeZero p] (hp2 : Nat.Prime p) : NoZeroDiv
 
 -- Polynomial.coeff
 #check Polynomial.degree_lt_iff_coeff_zero
-theorem Polynomial.degree_eq_one_iff (p : Polynomial (Fin 5)) : p.degree = 1 ↔ ∃ a b, a ≠ 0 ∧ p = (Polynomial.C a)  * Polynomial.X + (Polynomial.C b) := by {
+theorem Polynomial.degree_eq_one_iff (p : Polynomial (Fin 5)) : p.degree = 1 ↔ ∃ a b, a ≠ 0 ∧ (Polynomial.C a)  * Polynomial.X + (Polynomial.C b) = p := by {
   apply Iff.intro
   intro h
   have : Polynomial.degree p < (2: ℕ) := by
@@ -720,7 +721,7 @@ theorem Polynomial.degree_eq_one_iff (p : Polynomial (Fin 5)) : p.degree = 1 ↔
     }
 
   · intro ⟨a, b, ha, H⟩
-    rw [H]
+    rw [← H]
 
     have := primeinstNoZeroDivisors <| (Nat.prime_iff_card_units 5).mpr rfl
 
@@ -752,7 +753,7 @@ theorem Polynomial.not_isUnit_of_degree_pos{R : Type u} [Semiring R] [NoZeroDivi
 
 -- note: Units in polynomial rings are the constant polynomials
 -- so x^2 + 1 and 3 x^2 + 3 are both considered irreducible even though 3 x^2 + 3 has a common factor 3
-theorem Polynomial.eq_degree1_mul_degree1_of_reducible_degree2 (p : Polynomial (Fin 5)) (hp : Polynomial.degree p = 2) (hp2 : ¬ Irreducible p) : ∃ p1 p2, p1.degree = 1 ∧ p2.degree = 1 ∧ p = p1 * p2 := by {
+theorem Polynomial.eq_degree1_mul_degree1_of_reducible_degree2 (p : Polynomial (Fin 5)) (hp : Polynomial.degree p = 2) (hp2 : ¬ Irreducible p) : ∃ p1 p2, p1.degree = 1 ∧ p2.degree = 1 ∧ p1 * p2 = p := by {
   have hp0 : p ≠ 0 := by
     intro h
     simp [h] at hp
@@ -776,6 +777,8 @@ theorem Polynomial.eq_degree1_mul_degree1_of_reducible_degree2 (p : Polynomial (
       have := WithBot.add_left_cancel (by simp only) this
       use p1
       use p2
+      rw [hp12]
+      tauto
     match h : p1.degree with
     | none => {
       rw [show none = (⊥ : WithBot ℕ) from rfl] at h
@@ -815,4 +818,66 @@ theorem Polynomial.eq_degree1_mul_degree1_of_reducible_degree2 (p : Polynomial (
   }
 }
 
+theorem setOf_reducible_degree2_eq_map_degree1 : {p : Polynomial (Fin 5) |  Polynomial.degree p = 2 ∧ ¬ Irreducible p} = (fun ⟨p1, p2⟩ => p1 * p2) '' ({p : Polynomial (Fin 5) | p.degree = 1} ×ˢ {p : Polynomial (Fin 5) | p.degree = 1}) := by {
+  ext p
+  simp only [Set.mem_setOf_eq, Set.mem_image, Set.mem_prod, Prod.exists]
+  apply Iff.intro
+  · intro ⟨h1, h2⟩
+    have :=  Polynomial.eq_degree1_mul_degree1_of_reducible_degree2 p h1 h2
+    simp only [and_assoc]
+    exact this
+  · intro ⟨p1, p2, ⟨hp1, hp2⟩, H⟩
+    rw [← H]
+    simp only [Polynomial.degree_mul]
+    apply And.intro
+    simp [hp1, hp2]
+    intro ⟨h1, h2⟩
+    specialize h2 p1 p2 rfl
+    have := Polynomial.not_isUnit_of_degree_pos p1 (by simp [hp1])
+    have := Polynomial.not_isUnit_of_degree_pos p2 (by simp [hp2])
+    tauto
+}
+
+theorem Polynomial.setOf_degree1_eq : {p : Polynomial (Fin 5) | p.degree = 1} = (fun (⟨a, b⟩ : (Fin 5 × Fin 5)) => Polynomial.C a * Polynomial.X + Polynomial.C b) '' {a | a ≠ 0} ×ˢ Set.univ := by
+  ext p
+  simp only [Set.mem_setOf_eq, ne_eq, Set.mem_image, Set.mem_prod, Set.mem_univ, and_true,
+    Prod.exists]
+  exact Polynomial.degree_eq_one_iff p
+
+open Polynomial
+
+#check (X :Polynomial (Fin 5))
+example : ({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25}: Finset ℕ )= {0, 1,2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25}:= by simp only
+
+instance : Fintype ↑{p : Polynomial (Fin 5) | degree p = 1} := sorry
+
+theorem Finset.insert_comm {α} [DecidableEq α] (a b : α) (s : Finset α) : insert a (insert b s) = insert b (insert a s) :=
+  ext fun _ => by simp [or_left_comm]
+
+theorem setOf_degree1_eq : ({p : Polynomial (Fin 5) | p.degree = 1}).toFinset =
+{X + 0, X + 1, X + 2, X + 3, X + 4,
+2*X + 0, 2*X + 1, 2*X + 2, 2*X + 3, 2*X + 4,
+3*X + 0, 3*X + 1, 3*X + 2, 3*X + 3, 3*X + 4,
+4*X + 0, 4*X + 1, 4*X + 2, 4*X + 3, 4*X + 4} := by {
+  simp [Polynomial.setOf_degree1_eq]
+  rw [Set.toFinset_prod ({a : Fin 5 | ¬a = 0}) Set.univ]
+  have : Set.toFinset {a : Fin 5| ¬a = 0} = {1, 2, 3, 4} := by simp
+  rw [this]
+  have : (Set.univ : Set (Fin 5)).toFinset = {0, 1, 2, 3, 4} := by simp
+  rw [this]
+  simp? [Finset.image]
+  /-
+  tactic 'simp' failed, nested error:
+  (deterministic) timeout at 'whnf', maximum number of heartbeats (200000) has been reached (use 'set_option maxHeartbeats <num>' to set the limit)
+  -/
+  simp only [Finset.insert_comm]
+
+}
+example : (Polynomial.X + Polynomial.C 1 : Polynomial (Fin 5)) *  (Polynomial.X - Polynomial.C 1 : Polynomial (Fin 5)) =  (Polynomial.X^2 - Polynomial.C 1 : Polynomial (Fin 5)) := by {
+  ring
+  norm_num
+}
 end q8
+
+-- {3 * X + 4, 2 * X + 4, X + 4, X + 3, 2 * X + 3, 3 * X + 3, 4 * X + 3, X + 2, 2 * X + 2, 3 * X + 2, 4 * X + 2, X + 1, 2 * X + 1, 3 * X + 1, 4 * X + 1, X, 2 * X, 3 * X, 4 * X, 4 * X + 4}
+-- {X, X + 1, X + 2, X + 3, X + 4, 2 * X, 2 * X + 1, 2 * X + 2, 2 * X + 3, 2 * X + 4, 3 * X, 3 * X + 1, 3 * X + 2, 3 * X + 3, 3 * X + 4, 4 * X, 4 * X + 1, 4 * X + 2, 4 * X + 3, 4 * X + 4}
