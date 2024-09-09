@@ -19,15 +19,12 @@ def S := trace.rep '' Set.univ
 def S' := { x : ℕ × ℕ | x.1 ≥ x.2 ∧ 3 ∣ (x.1 - x.2 : ℤ) }
 
 theorem S_subset_S' : S ⊆ S' := by
-{
-  intro ⟨x, y⟩
-  intro ⟨t, h⟩
+  intro ⟨x, y⟩ ⟨t, h⟩
   induction t generalizing x y with
-  | zerozero => {
+  | zerozero =>
     rw [← h.2, trace.rep, S']
     simp
-  }
-  | addoneone t ih => {
+  | addoneone t ih =>
     rw [← h.2, trace.rep]
     simp at ih
     specialize ih (x - 1) (y - 1)
@@ -37,8 +34,7 @@ theorem S_subset_S' : S ⊆ S' := by
     specialize ih this
     simp [S'] at ih
     simp [S', this, ih]
-  }
-  | addthreezero t ih => {
+  | addthreezero t ih =>
     simp [← h.2, trace.rep]
     simp at ih
     specialize ih (x - 3) y
@@ -56,14 +52,11 @@ theorem S_subset_S' : S ⊆ S' := by
     have :  (x - 3 + 3 - y : ℤ) = x - y := by ring
     rw [← e] at this
     rw [this]
-    have : (x - 3 : ℕ) - y = (x - y : ℤ) - (3:ℕ) := by {
+    have : (x - 3 : ℕ) - y = (x - y : ℤ) - (3:ℕ) := by
       rw [e]
       ring
-    }
     rw [this] at ih
     exact dvd_sub_self_right.mp ih.2
-  }
-}
 
 #check Nat.strong_induction_on
 theorem S'_subset_S : S' ⊆ S := by
@@ -102,12 +95,9 @@ theorem S'_subset_S : S' ⊆ S := by
       match this with
       | ⟨k, hk⟩ => {
         cases k with
-        | zero => {
-          simp at hk
-          simp [hk]
-          exact ⟨trace.zerozero, rfl⟩
-        }
-        | succ k => {
+        | zero =>
+          exact ⟨trace.zerozero, by simp [hk]⟩
+        | succ k =>
           specialize ih (3 * k) (by linarith)
           simp [p] at ih
           specialize ih (a - 3) 0
@@ -120,13 +110,11 @@ theorem S'_subset_S : S' ⊆ S := by
           rw [o] at this
           specialize ih this (by linarith)
           match ih with
-          | ⟨u, hu⟩ => {
+          | ⟨u, hu⟩ =>
             use trace.addthreezero u
             simp [trace.rep, hu]
             exact
               Mathlib.Tactic.Ring.add_congr (congrFun (congrArg HSub.hSub hk) 3) rfl (id hk.symm)
-          }
-        }
       }
     }
     | inr r => {
